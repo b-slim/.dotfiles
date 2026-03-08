@@ -8,23 +8,36 @@ Personal Neovim and tmux configurations with a deploy script for remote Linux VM
 |------|-------------|
 | `nvim_init.lua` | Neovim config with markdown editing support (folding, TOC sidebar, render-markdown, header navigation, URL opening) |
 | `tmux.conf` | Tmux configuration |
+| `deploy-dotfiles` | Script to deploy configs to remote Linux VMs |
+
+## Setup
+
+Clone the repo and optionally symlink the deploy script:
+
+```bash
+git clone git@github.com:b-slim/.dotfiles.git ~/.dotfiles
+
+# Optional: make deploy-dotfiles available globally
+mkdir -p ~/bin
+ln -sf ~/.dotfiles/deploy-dotfiles ~/bin/deploy-dotfiles
+```
 
 ## Deploy to Remote VMs
 
-The `deploy-dotfiles` script (installed at `~/bin/deploy-dotfiles`) copies both configs to remote hosts and auto-installs Neovim plugins.
+Run the script directly from the repo or via `~/bin` if symlinked:
 
 ```bash
 # Single host
-deploy-dotfiles user@vm1
+~/.dotfiles/deploy-dotfiles user@vm1
 
 # Multiple hosts
-deploy-dotfiles user@vm1 user@vm2 user@vm3
+~/.dotfiles/deploy-dotfiles user@vm1 user@vm2 user@vm3
 ```
 
 ### What it does per host
 
-1. Rsyncs `~/.config/nvim/` (Neovim config)
-2. Copies `~/.tmux.conf` and reloads tmux if running
+1. Copies `nvim_init.lua` from this repo to `~/.config/nvim/init.lua` on the remote host
+2. Copies `tmux.conf` from this repo to `~/.tmux.conf` and reloads tmux if running
 3. Runs headless Neovim to auto-install plugins via lazy.nvim
 
 ### Prerequisites on remote VMs
