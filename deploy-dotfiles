@@ -19,16 +19,13 @@ fi
 for host in "$@"; do
   echo "--- Deploying to $host ---"
 
-  # Get remote home directory and create nvim config dir
-  remote_home=$(ssh "$host" 'echo $HOME')
-  ssh "$host" "mkdir -p $remote_home/.config/nvim"
-
-  # Copy neovim config
-  rsync -avz "$NVIM_CONFIG" "$host:$remote_home/.config/nvim/init.lua"
+  # Create nvim config dir and copy configs via scp (supports hostnames with /)
+  ssh "$host" "mkdir -p ~/.config/nvim"
+  scp "$NVIM_CONFIG" "$host":~/.config/nvim/init.lua
 
   # Copy tmux config
   if [ -f "$TMUX_CONFIG" ]; then
-    rsync -avz "$TMUX_CONFIG" "$host:$remote_home/.tmux.conf"
+    scp "$TMUX_CONFIG" "$host":~/.tmux.conf
     ssh "$host" 'tmux source-file ~/.tmux.conf 2>/dev/null || echo "  Note: tmux not running, config will apply on next session"'
   fi
 
