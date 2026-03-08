@@ -1,0 +1,41 @@
+#!/bin/bash
+# Deploy Neovim and tmux configs to remote Linux VMs
+# Usage:
+#   deploy-dotfiles host1 host2 host3
+#   deploy-dotfiles user@host1 user@host2
+
+set -euo pipefail
+
+NVIM_CONFIG="$HOME/.config/nvim"
+TMUX_CONFIG="$HOME/.tmux.conf"
+
+if [ $# -eq 0 ]; then
+  echo "Usage: $0 <host1> [host2] [host3] ..."
+  echo "Example: $0 user@vm1 user@vm2"
+  exit 1
+fi
+
+for host in "$@"; do
+  echo "--- Deploying to $host ---"
+
+  # Ensure ~/.config/nvim exists on remote
+  ssh "$host" "mkdir -p ~/.config/nvim"
+
+  # Copy config (exclude lazy plugin cache — will be auto-installed)
+  rsync -avz --delete \
+    --exclude "lazy-lock.json" \
+    "$NVIM_CONFIG/" "$host:~/.config/nvim/"
+
+  # Copy tmux config
+  if [ -f "$TMUX_CONFIG" ]; then
+    rsync -avz "$TMUX_CONFIG" "$host:~/.tmux.conf"
+    ssh "$host" 'tmux source-file ~/.tmux.conf 2>/dev/null || echo "  Note: tmux not running, config will apply on next session"'
+  fi
+
+  # Headless plugin install on remote
+  ssh "$host" 'nvim --headless "+Lazy! sync" +qa 2>/dev/null || echo "  Note: run nvim manually to install plugins"'
+
+  echo "  Done: $host"
+done
+
+echo "--- All hosts deployed ---"
