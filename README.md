@@ -9,7 +9,7 @@ Personal Neovim and tmux configurations with a deploy script for remote Linux VM
 | `nvim_init.lua` | Neovim config with markdown editing support (folding, TOC sidebar, render-markdown, header navigation, URL opening) |
 | `tmux.conf` | Tmux configuration |
 | `statusline-command.sh` | Claude Code statusline showing git branch, token usage, cost, and model info |
-| `claude-settings.json` | Minimal Claude Code settings that enables the statusline |
+| `claude-settings.json` | Claude Code settings: statusline, permissions (allow + deny) |
 | `deploy-dotfiles` | Script to deploy all configs to remote Linux VMs |
 
 ## Setup
@@ -41,7 +41,7 @@ Run the script directly from the repo or via `~/bin` if symlinked:
 1. Copies `nvim_init.lua` to `~/.config/nvim/init.lua` on the remote host
 2. Copies `tmux.conf` to `~/.tmux.conf` and reloads tmux if running
 3. Copies `statusline-command.sh` to `~/.claude/` and makes it executable
-4. Copies `claude-settings.json` to `~/.claude/settings.json` (only if no existing settings)
+4. Merges `claude-settings.json` into `~/.claude/settings.json` (statusline + permissions, preserves existing settings)
 5. Runs headless Neovim to auto-install plugins via lazy.nvim
 
 ### Prerequisites on remote VMs
@@ -65,6 +65,30 @@ The statusline script displays the following in Claude Code's terminal:
 - Keyboard shortcuts reference line
 
 Installed to `~/.claude/statusline-command.sh` with settings in `~/.claude/settings.json`.
+
+## Claude Code Permissions
+
+The `claude-settings.json` includes curated allow/deny permission rules.
+
+### Allowed
+
+- File operations: `Read`, `Edit`, `Write` on project files
+- Shell utilities: `ls`, `cat`, `grep`, `find`, `head`, `tail`, `diff`, `sort`, `awk`, `sed`, `cut`, `tr`, `xargs`, `tree`, etc.
+- Git: all git commands
+- Build tools: `gradle`, `./gradlew`, `npm`
+- Languages: `python`, `python3`, `java`
+- GitHub CLI: `gh pr`, `gh api`, `gh issue`, `gh search`, `gh auth`
+- Kubernetes: `kubectl get`, `kubectl describe`, `kubectl logs`
+- MCP tools: `mcp__captain__*`, `mcp__glean_default__*`
+
+### Denied (safety guards)
+
+- Sensitive files: `.env`, `.pem`, `.key`, `.p12`, `.pfx`, certs, `.keystore`, `.netrc`, `.pgpass`
+- Credential dirs: `~/.datavault`, `~/.azure`, `~/.azure-devops`, `~/dev.src`
+- Destructive git: `git push --force`, `git reset --hard`, `git clean -f`
+- Destructive shell: `rm -rf /`
+- Network tools: `ssh`, `scp`, `nc`, `netcat`, `telnet`
+- `WebSearch`
 
 ## Neovim Markdown Keymaps
 
