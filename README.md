@@ -8,7 +8,9 @@ Personal Neovim and tmux configurations with a deploy script for remote Linux VM
 |------|-------------|
 | `nvim_init.lua` | Neovim config with markdown editing support (folding, TOC sidebar, render-markdown, header navigation, URL opening) |
 | `tmux.conf` | Tmux configuration |
-| `deploy-dotfiles` | Script to deploy configs to remote Linux VMs |
+| `statusline-command.sh` | Claude Code statusline showing git branch, token usage, cost, and model info |
+| `claude-settings.json` | Minimal Claude Code settings that enables the statusline |
+| `deploy-dotfiles` | Script to deploy all configs to remote Linux VMs |
 
 ## Setup
 
@@ -36,15 +38,33 @@ Run the script directly from the repo or via `~/bin` if symlinked:
 
 ### What it does per host
 
-1. Copies `nvim_init.lua` from this repo to `~/.config/nvim/init.lua` on the remote host
-2. Copies `tmux.conf` from this repo to `~/.tmux.conf` and reloads tmux if running
-3. Runs headless Neovim to auto-install plugins via lazy.nvim
+1. Copies `nvim_init.lua` to `~/.config/nvim/init.lua` on the remote host
+2. Copies `tmux.conf` to `~/.tmux.conf` and reloads tmux if running
+3. Copies `statusline-command.sh` to `~/.claude/` and makes it executable
+4. Copies `claude-settings.json` to `~/.claude/settings.json` (only if no existing settings)
+5. Runs headless Neovim to auto-install plugins via lazy.nvim
 
 ### Prerequisites on remote VMs
 
 - Neovim 0.9+
 - git
+- jq (for Claude statusline)
+- bc (for Claude statusline cost calculation)
 - A Nerd Font in your terminal (for icons)
+
+## Claude Code Statusline
+
+The statusline script displays the following in Claude Code's terminal:
+
+- Green arrow + current directory (robbyrussell-inspired)
+- Git branch with dirty indicator
+- Token usage with color-coded percentage (green < 50%, yellow 50-79%, red 80%+)
+- Estimated session cost based on model pricing
+- Active model name
+- Agent name (if running a subagent)
+- Keyboard shortcuts reference line
+
+Installed to `~/.claude/statusline-command.sh` with settings in `~/.claude/settings.json`.
 
 ## Neovim Markdown Keymaps
 
