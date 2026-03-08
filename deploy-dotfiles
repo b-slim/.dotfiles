@@ -6,8 +6,9 @@
 
 set -euo pipefail
 
-NVIM_CONFIG="$HOME/.config/nvim"
-TMUX_CONFIG="$HOME/.tmux.conf"
+DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
+NVIM_CONFIG="$DOTFILES_DIR/nvim_init.lua"
+TMUX_CONFIG="$DOTFILES_DIR/tmux.conf"
 
 if [ $# -eq 0 ]; then
   echo "Usage: $0 <host1> [host2] [host3] ..."
@@ -18,13 +19,9 @@ fi
 for host in "$@"; do
   echo "--- Deploying to $host ---"
 
-  # Ensure ~/.config/nvim exists on remote
+  # Copy neovim config
   ssh "$host" "mkdir -p ~/.config/nvim"
-
-  # Copy config (exclude lazy plugin cache — will be auto-installed)
-  rsync -avz --delete \
-    --exclude "lazy-lock.json" \
-    "$NVIM_CONFIG/" "$host:~/.config/nvim/"
+  rsync -avz "$NVIM_CONFIG" "$host:~/.config/nvim/init.lua"
 
   # Copy tmux config
   if [ -f "$TMUX_CONFIG" ]; then
