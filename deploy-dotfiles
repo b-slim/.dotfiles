@@ -19,13 +19,13 @@ fi
 for host in "$@"; do
   echo "--- Deploying to $host ---"
 
-  # Create nvim config dir and copy configs via scp (supports hostnames with /)
+  # Copy configs via SSH pipe (handles hostnames with / like trino-deployer/freezing-silicon)
   ssh "$host" "mkdir -p ~/.config/nvim"
-  scp "$NVIM_CONFIG" "$host":~/.config/nvim/init.lua
+  cat "$NVIM_CONFIG" | ssh "$host" "cat > ~/.config/nvim/init.lua"
 
   # Copy tmux config
   if [ -f "$TMUX_CONFIG" ]; then
-    scp "$TMUX_CONFIG" "$host":~/.tmux.conf
+    cat "$TMUX_CONFIG" | ssh "$host" "cat > ~/.tmux.conf"
     ssh "$host" 'tmux source-file ~/.tmux.conf 2>/dev/null || echo "  Note: tmux not running, config will apply on next session"'
   fi
 
