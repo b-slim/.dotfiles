@@ -9,6 +9,7 @@ set -euo pipefail
 DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
 NVIM_CONFIG="$DOTFILES_DIR/nvim_init.lua"
 TMUX_CONFIG="$DOTFILES_DIR/tmux.conf"
+CLAUDE_STATUSLINE="$DOTFILES_DIR/statusline-command.sh"
 
 if [ $# -eq 0 ]; then
   echo "Usage: $0 <host1> [host2] [host3] ..."
@@ -27,6 +28,12 @@ for host in "$@"; do
   if [ -f "$TMUX_CONFIG" ]; then
     cat "$TMUX_CONFIG" | ssh "$host" "cat > ~/.tmux.conf"
     ssh "$host" 'tmux source-file ~/.tmux.conf 2>/dev/null || echo "  Note: tmux not running, config will apply on next session"'
+  fi
+
+  # Copy Claude statusline
+  if [ -f "$CLAUDE_STATUSLINE" ]; then
+    ssh "$host" "mkdir -p ~/.claude"
+    cat "$CLAUDE_STATUSLINE" | ssh "$host" "cat > ~/.claude/statusline-command.sh && chmod +x ~/.claude/statusline-command.sh"
   fi
 
   # Headless plugin install on remote
