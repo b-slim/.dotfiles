@@ -38,17 +38,19 @@ Run the script directly from the repo or via `~/bin` if symlinked:
 
 ### What it does per host
 
-1. Copies `nvim_init.lua` to `~/.config/nvim/init.lua` on the remote host
-2. Copies `tmux.conf` to `~/.tmux.conf` and reloads tmux if running
-3. Copies `statusline-command.sh` to `~/.claude/` and makes it executable
-4. Merges `claude-settings.json` into `~/.claude/settings.json` (statusline + permissions, preserves existing settings)
-5. Runs headless Neovim to auto-install plugins via lazy.nvim
+1. Installs/updates Neovim to latest if missing or below 0.8.0 (user-local install to `~/.local/`, no sudo needed)
+2. Copies `nvim_init.lua` to `~/.config/nvim/init.lua` on the remote host
+3. Copies `tmux.conf` to `~/.tmux.conf` and reloads tmux if running
+4. Copies `statusline-command.sh` to `~/.claude/` and makes it executable
+5. Merges `claude-settings.json` into `~/.claude/settings.json` (statusline + permissions, preserves existing settings)
+6. Installs Ghostty terminfo (`xterm-ghostty`) if available locally, fixing "missing or unsuitable terminal" errors
+7. Runs headless Neovim to auto-install plugins via lazy.nvim
 
 ### Prerequisites on remote VMs
 
-- Neovim 0.9+
 - git
-- jq (for Claude statusline)
+- curl (for Neovim auto-install)
+- jq (for Claude settings merge)
 - bc (for Claude statusline cost calculation)
 - A Nerd Font in your terminal (for icons)
 
