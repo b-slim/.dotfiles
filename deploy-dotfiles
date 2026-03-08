@@ -21,6 +21,37 @@ fi
 for host in "$@"; do
   echo "--- Deploying to $host ---"
 
+  # Update Neovim if missing or version < 0.8.0
+  ssh "$host" '
+    need_update=false
+    if ! command -v nvim >/dev/null 2>&1; then
+      echo "  Neovim not found, installing..."
+      need_update=true
+    else
+      nvim_version=$(nvim --version | head -1 | grep -oE "[0-9]+\.[0-9]+\.[0-9]+")
+      major=$(echo "$nvim_version" | cut -d. -f1)
+      minor=$(echo "$nvim_version" | cut -d. -f2)
+      if [ "$major" -lt 1 ] && [ "$minor" -lt 8 ]; then
+        echo "  Neovim $nvim_version is below 0.8.0, updating..."
+        need_update=true
+      else
+        echo "  Neovim $nvim_version is sufficient"
+      fi
+    fi
+    if [ "$need_update" = true ]; then
+      curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
+      rm -rf ~/.local/nvim-linux-x86_64
+      mkdir -p ~/.local
+      tar -C ~/.local -xzf nvim-linux-x86_64.tar.gz
+      rm -f nvim-linux-x86_64.tar.gz
+      if ! grep -q "/.local/nvim-linux-x86_64/bin" ~/.bashrc 2>/dev/null; then
+        echo "export PATH=\"\$HOME/.local/nvim-linux-x86_64/bin:\$PATH\"" >> ~/.bashrc
+      fi
+      export PATH="$HOME/.local/nvim-linux-x86_64/bin:$PATH"
+      echo "  Neovim updated to $(nvim --version | head -1)"
+    fi
+  '
+
   # Copy configs via SSH pipe (handles hostnames with / like trino-deployer/freezing-silicon)
   ssh "$host" "mkdir -p ~/.config/nvim"
   cat "$NVIM_CONFIG" | ssh "$host" "cat > ~/.config/nvim/init.lua"
@@ -51,6 +82,11 @@ for host in "$@"; do
         fi
       "
     fi
+  fi
+
+  # Install Ghostty terminfo if available locally
+  if infocmp -x xterm-ghostty >/dev/null 2>&1; then
+    infocmp -x xterm-ghostty | ssh "$host" 'tic -x - 2>/dev/null && echo "  Installed xterm-ghostty terminfo" || echo "  Warning: could not install terminfo (tic not found)"'
   fi
 
   # Headless plugin install on remote
