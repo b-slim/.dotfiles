@@ -35,10 +35,22 @@ for host in "$@"; do
   if [ -f "$CLAUDE_STATUSLINE" ]; then
     ssh "$host" "mkdir -p ~/.claude"
     cat "$CLAUDE_STATUSLINE" | ssh "$host" "cat > ~/.claude/statusline-command.sh && chmod +x ~/.claude/statusline-command.sh"
-    # Only write settings.json if it doesn't already exist (avoid overwriting user settings)
+    # Ensure settings.json has statusline config
     if [ -f "$CLAUDE_SETTINGS" ]; then
-      ssh "$host" 'test -f ~/.claude/settings.json' 2>/dev/null || \
-        cat "$CLAUDE_SETTINGS" | ssh "$host" "cat > ~/.claude/settings.json"
+      ssh "$host" bash -s <<'REMOTE_SCRIPT'
+        if [ ! -f ~/.claude/settings.json ]; then
+          echo '{}' > ~/.claude/settings.json
+        fi
+        if ! grep -q "statusline-command" ~/.claude/settings.json; then
+          # Merge statusline config into existing settings
+          if command -v jq >/dev/null 2>&1; then
+            tmp=$(jq '. + {"statusLine":{"type":"command","command":"bash ~/.claude/statusline-command.sh"}}' ~/.claude/settings.json)
+            echo "$tmp" > ~/.claude/settings.json
+          else
+            echo "  Warning: jq not found, cannot merge statusline into existing settings.json"
+          fi
+        fi
+REMOTE_SCRIPT
     fi
   fi
 
