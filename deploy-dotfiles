@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
+DOTFILES_DIR="$HOME/.dotfiles"
 NVIM_CONFIG="$DOTFILES_DIR/nvim_init.lua"
 TMUX_CONFIG="$DOTFILES_DIR/tmux.conf"
 CLAUDE_STATUSLINE="$DOTFILES_DIR/statusline-command.sh"

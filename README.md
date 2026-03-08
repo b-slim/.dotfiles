@@ -14,7 +14,7 @@ Personal Neovim and tmux configurations with a deploy script for remote Linux VM
 
 ## Setup
 
-Clone the repo and optionally symlink the deploy script:
+Clone the repo to `~/.dotfiles` (required path) and optionally symlink the deploy script:
 
 ```bash
 git clone git@github.com:b-slim/.dotfiles.git ~/.dotfiles
@@ -23,6 +23,8 @@ git clone git@github.com:b-slim/.dotfiles.git ~/.dotfiles
 mkdir -p ~/bin
 ln -sf ~/.dotfiles/deploy-dotfiles ~/bin/deploy-dotfiles
 ```
+
+> **Note:** Use `ln -sf` (symlink), not `cp`. A symlink ensures the script stays up to date with `git pull`.
 
 ## Deploy to Remote VMs
 
