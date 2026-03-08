@@ -10,6 +10,7 @@ DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
 NVIM_CONFIG="$DOTFILES_DIR/nvim_init.lua"
 TMUX_CONFIG="$DOTFILES_DIR/tmux.conf"
 CLAUDE_STATUSLINE="$DOTFILES_DIR/statusline-command.sh"
+CLAUDE_SETTINGS="$DOTFILES_DIR/claude-settings.json"
 
 if [ $# -eq 0 ]; then
   echo "Usage: $0 <host1> [host2] [host3] ..."
@@ -34,6 +35,11 @@ for host in "$@"; do
   if [ -f "$CLAUDE_STATUSLINE" ]; then
     ssh "$host" "mkdir -p ~/.claude"
     cat "$CLAUDE_STATUSLINE" | ssh "$host" "cat > ~/.claude/statusline-command.sh && chmod +x ~/.claude/statusline-command.sh"
+    # Only write settings.json if it doesn't already exist (avoid overwriting user settings)
+    if [ -f "$CLAUDE_SETTINGS" ]; then
+      ssh "$host" 'test -f ~/.claude/settings.json' 2>/dev/null || \
+        cat "$CLAUDE_SETTINGS" | ssh "$host" "cat > ~/.claude/settings.json"
+    fi
   fi
 
   # Headless plugin install on remote
