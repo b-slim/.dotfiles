@@ -82,6 +82,12 @@ if command -v zoxide >/dev/null 2>&1; then
   eval "$(zoxide init zsh)"
 fi
 
+# ── jenv — Java version manager ──────────────────────────────────────────────
+if [ -d "$HOME/.jenv/bin" ]; then
+  export PATH="$HOME/.jenv/bin:$PATH"
+  eval "$(jenv init -)"
+fi
+
 # ── Aliases: Navigation ───────────────────────────────────────────────────────
 alias ..='cd ..'
 alias ...='cd ../..'
@@ -129,6 +135,21 @@ command -v fd >/dev/null      && alias find='fd'
 command -v ripgrep >/dev/null && alias grep='rg'
 command -v lazygit >/dev/null && alias lg='lazygit'
 alias j='z'                   # zoxide shorthand
+
+# ── Aliases: Java ────────────────────────────────────────────────────────────
+alias jv='jenv version'           # show active JDK
+alias jvs='jenv versions'         # list all registered JDKs
+alias jvl='jenv local'            # set .java-version in current dir
+alias jvg='jenv global'           # set global default
+
+alias mvnc='mvn clean'
+alias mvni='mvn install -T4'      # parallel install (4 threads)
+alias mvnci='mvn clean install -T4'
+alias mvnp='mvn package'
+alias mvncp='mvn clean package'
+alias mvnt='mvn test'
+alias mvnst='mvn install -DskipTests'
+alias mvntree='mvn dependency:tree'
 
 # ── Aliases: macOS ────────────────────────────────────────────────────────────
 alias showfiles='defaults write com.apple.finder AppleShowAllFiles YES && killall Finder'
@@ -249,6 +270,17 @@ cheat() {
   echo ""
   printf "  ${g}cheat <tool>${r}         ${d}→ tldr <tool> for community docs${r}\n"
   printf "  ${g}tldr <tool>${r}          ${d}concise man page (try: tldr fzf, tldr git)${r}\n"
+  echo ""
+  printf "${b}${c}── Java / jenv ─────────────────────────────────────────────${r}\n"
+  printf "  ${y}jv${r}                   ${d}show active JDK version${r}\n"
+  printf "  ${y}jvs${r}                  ${d}list all registered JDKs${r}\n"
+  printf "  ${y}jvl <version>${r}        ${d}set .java-version in current dir${r}\n"
+  printf "  ${y}jvg <version>${r}        ${d}set global default JDK${r}\n"
+  printf "  ${y}mvnci${r}                ${d}mvn clean install (4 threads)${r}\n"
+  printf "  ${y}mvncp${r}                ${d}mvn clean package${r}\n"
+  printf "  ${y}mvnt${r}                 ${d}mvn test${r}\n"
+  printf "  ${y}mvnst${r}                ${d}mvn install -DskipTests${r}\n"
+  printf "  ${y}mvntree${r}              ${d}mvn dependency:tree${r}\n"
   echo ""
 }
 

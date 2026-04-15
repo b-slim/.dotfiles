@@ -36,6 +36,14 @@ brew "tldr"             # concise man pages
 brew "htop"
 brew "watch"
 
+# ── Java ──────────────────────────────────────────────────────────────────────
+brew "jenv"             # Java version manager (per-directory via .java-version)
+brew "maven"            # build tool
+
+tap "homebrew/cask-versions"
+cask "temurin@21"       # Eclipse Temurin JDK 21 (current LTS)
+cask "temurin@17"       # Eclipse Temurin JDK 17 (previous LTS)
+
 # ── Fonts ─────────────────────────────────────────────────────────────────────
 cask "font-jetbrains-mono-nerd-font"
 

@@ -363,6 +363,47 @@ brew bundle --file=~/.dotfiles/Brewfile
 | `watch` | Run command repeatedly |
 | `font-jetbrains-mono-nerd-font` | Terminal font with icons |
 | `ghostty` | Terminal emulator |
+| `jenv` | Java version manager (per-directory via `.java-version`) |
+| `maven` | Build tool |
+| `temurin@21` | Eclipse Temurin JDK 21 (current LTS) |
+| `temurin@17` | Eclipse Temurin JDK 17 (previous LTS) |
+
+---
+
+## Java / jenv
+
+[jenv](https://www.jenv.be/) manages which JDK is active globally or per directory.
+
+### Plugins enabled by deploy script
+
+| Plugin | What it does |
+|--------|-------------|
+| `export` | Sets `JAVA_HOME` automatically when JDK switches |
+| `maven` | Makes `mvn` use the jenv-selected JDK |
+| `gradle` | Makes `gradle` use the jenv-selected JDK |
+
+### Per-directory switching
+
+Drop a `.java-version` file in any repo to pin its JDK:
+
+```bash
+jvl 17          # writes .java-version = 17 in current dir
+jvl 21          # switch to 21 for this project
+jvs             # list all registered JDKs
+jvg 21          # set global default
+```
+
+Commit `.java-version` to the repo so every developer gets the same JDK automatically.
+
+### Maven aliases
+
+| Alias | Command |
+|-------|---------|
+| `mvnci` | `mvn clean install -T4` (4 threads) |
+| `mvncp` | `mvn clean package` |
+| `mvnt` | `mvn test` |
+| `mvnst` | `mvn install -DskipTests` |
+| `mvntree` | `mvn dependency:tree` |
 
 ---
 

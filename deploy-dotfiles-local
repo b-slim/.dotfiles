@@ -231,6 +231,47 @@ else
   run chmod 600 "$HOME/.ssh/config.custom"
 fi
 
+# ── jenv setup ────────────────────────────────────────────────────────────────
+
+echo ""
+echo "Setting up jenv..."
+if ! command -v jenv >/dev/null 2>&1; then
+  warn "jenv not found, skipping (run brew bundle first)"
+else
+  # Enable essential plugins
+  for plugin in export maven gradle; do
+    if [ "$DRY_RUN" = true ]; then
+      dryrun "jenv enable-plugin $plugin"
+    else
+      jenv enable-plugin "$plugin" 2>/dev/null && success "jenv plugin: $plugin" || true
+    fi
+  done
+
+  # Auto-discover and register all installed JDKs
+  for jdk_home in /Library/Java/JavaVirtualMachines/*/Contents/Home; do
+    if [ -d "$jdk_home" ]; then
+      if [ "$DRY_RUN" = true ]; then
+        dryrun "jenv add $jdk_home"
+      else
+        jenv add "$jdk_home" 2>/dev/null && success "jenv: registered $jdk_home" || true
+      fi
+    fi
+  done
+
+  # Set global default to latest registered version if none set
+  if [ "$DRY_RUN" = false ]; then
+    current=$(jenv global 2>/dev/null)
+    if [ "$current" = "system" ] || [ -z "$current" ]; then
+      latest=$(jenv versions --bare 2>/dev/null | grep -v "^system" | sort -V | tail -1)
+      if [ -n "$latest" ]; then
+        jenv global "$latest" && success "jenv global set to $latest"
+      fi
+    else
+      success "jenv global: $current"
+    fi
+  fi
+fi
+
 # ── Neovim config ─────────────────────────────────────────────────────────────
 
 echo ""
