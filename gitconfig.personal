@@ -1,0 +1,6 @@
+# ~/.gitconfig.personal — personal identity
+# Auto-loaded for repos under ~/perso/ via includeIf in ~/.gitconfig.local
+
+[user]
+    name = Slim Bouguerra
+    email = bslim@apache.org

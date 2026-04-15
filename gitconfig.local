@@ -1,0 +1,10 @@
+# ~/.gitconfig.local — default identity (LinkedIn)
+# Included from ~/.gitconfig via [include] path = ~/.gitconfig.local
+
+[user]
+    name = Slim Bouguerra
+    email = sbouguerra@linkedin.com
+
+# Override with personal identity for repos under ~/perso/
+[includeIf "gitdir:~/perso/"]
+    path = ~/.gitconfig.personal

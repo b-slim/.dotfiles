@@ -73,7 +73,7 @@ deploy-dotfiles-local
 4. Deploys `starship.toml` to `~/.config/starship.toml`
 5. Deploys `ghostty.conf` to `~/.config/ghostty/config`
 6. Deploys `gitconfig` to `~/.gitconfig` and `gitignore_global` to `~/.gitignore_global`
-7. Creates `~/.gitconfig.local` (identity placeholder) if it doesn't exist
+7. Deploys `gitconfig.local` to `~/.gitconfig.local` (LinkedIn default identity + `includeIf` for `~/perso/`) and `gitconfig.personal` to `~/.gitconfig.personal` (Apache/personal identity)
 8. Deploys `nvim_init.lua` to `~/.config/nvim/init.lua`
 9. Deploys `tmux.conf` to `~/.tmux.conf` and reloads tmux if running
 10. Deploys `statusline-command.sh` to `~/.claude/` and makes it executable
@@ -148,7 +148,20 @@ Key aliases:
 | `git sa` | Stash including untracked files |
 | `git changed` | Show files changed in last commit |
 
-Identity (name + email) is kept in `~/.gitconfig.local` — not tracked in this repo.
+### Git identities
+
+Two identities are configured automatically:
+
+| Directory | Identity |
+|-----------|----------|
+| Everywhere (default) | `sbouguerra@linkedin.com` |
+| `~/perso/**` | `bslim@apache.org` |
+
+This is wired up via `includeIf "gitdir:~/perso/"` in `~/.gitconfig.local`. Verify which identity is active in any repo with:
+
+```bash
+git config user.email
+```
 
 ## Ghostty
 

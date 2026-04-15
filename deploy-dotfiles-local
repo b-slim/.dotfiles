@@ -19,6 +19,8 @@ ZSHRC="$DOTFILES_DIR/zshrc"
 STARSHIP_CONFIG="$DOTFILES_DIR/starship.toml"
 GHOSTTY_CONFIG="$DOTFILES_DIR/ghostty.conf"
 GITCONFIG="$DOTFILES_DIR/gitconfig"
+GITCONFIG_LOCAL="$DOTFILES_DIR/gitconfig.local"
+GITCONFIG_PERSONAL="$DOTFILES_DIR/gitconfig.personal"
 GITIGNORE_GLOBAL="$DOTFILES_DIR/gitignore_global"
 CLAUDE_STATUSLINE="$DOTFILES_DIR/statusline-command.sh"
 CLAUDE_SETTINGS="$DOTFILES_DIR/claude-settings.json"
@@ -206,22 +208,14 @@ else
   deploy_file "$GITIGNORE_GLOBAL" "$HOME/.gitignore_global"
 fi
 
-# Create ~/.gitconfig.local for identity if it doesn't exist
-if [ ! -f "$HOME/.gitconfig.local" ]; then
-  if [ "$DRY_RUN" = true ]; then
-    dryrun "create ~/.gitconfig.local (identity placeholder)"
-  else
-    cat > "$HOME/.gitconfig.local" <<'EOF'
-# Machine-specific git identity — not tracked in dotfiles
-# Fill in your name and email:
-[user]
-    name = Your Name
-    email = you@example.com
-EOF
-    info "Created ~/.gitconfig.local — edit it to set your name and email"
-  fi
-else
-  success "~/.gitconfig.local already exists"
+# Deploy git identities
+if [ -f "$GITCONFIG_LOCAL" ]; then
+  deploy_file "$GITCONFIG_LOCAL" "$HOME/.gitconfig.local"
+fi
+if [ -f "$GITCONFIG_PERSONAL" ]; then
+  deploy_file "$GITCONFIG_PERSONAL" "$HOME/.gitconfig.personal"
+  run mkdir -p "$HOME/perso"
+  info "~/perso/ created — repos cloned there will use bslim@apache.org"
 fi
 
 # ── Neovim config ─────────────────────────────────────────────────────────────
@@ -338,8 +332,8 @@ echo "--- Done ---"
 echo ""
 echo "Next steps:"
 echo "  • source ~/.zshrc  (or open a new terminal)"
-echo "  • Edit ~/.gitconfig.local to set your git name and email"
 echo "  • Launch nvim to verify config loaded"
+echo "  • Clone personal repos under ~/perso/ to use bslim@apache.org automatically"
 if [ "$RUN_MACOS_DEFAULTS" = false ]; then
   echo "  • Run 'deploy-dotfiles-local --macos-defaults' to apply keyboard/Dock/Finder settings"
 fi
