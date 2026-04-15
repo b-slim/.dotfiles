@@ -11,13 +11,14 @@ Personal Neovim and tmux configurations with a deploy script for remote Linux VM
 | `statusline-command.sh` | Claude Code statusline showing git branch, token usage, cost, and model info |
 | `claude-settings.json` | Claude Code settings: statusline, permissions (allow + deny) |
 | `deploy-dotfiles` | Script to deploy all configs to remote Linux VMs |
+| `deploy-dotfiles-local` | Script to deploy all configs to the local macOS machine |
 
 ## Setup
 
-One-liner install:
+One-liner install (clone + deploy locally):
 
 ```bash
-git clone git@github.com:b-slim/.dotfiles.git ~/.dotfiles && mkdir -p ~/bin && ln -sf ~/.dotfiles/deploy-dotfiles ~/bin/deploy-dotfiles
+git clone git@github.com:b-slim/.dotfiles.git ~/.dotfiles && ~/.dotfiles/deploy-dotfiles-local
 ```
 
 Or step by step:
@@ -25,12 +26,50 @@ Or step by step:
 ```bash
 git clone git@github.com:b-slim/.dotfiles.git ~/.dotfiles
 
-# Optional: make deploy-dotfiles available globally
-mkdir -p ~/bin
-ln -sf ~/.dotfiles/deploy-dotfiles ~/bin/deploy-dotfiles
+# Preview what will happen
+~/.dotfiles/deploy-dotfiles-local --dry-run
+
+# Deploy (symlinks configs and installs missing deps via Homebrew)
+~/.dotfiles/deploy-dotfiles-local
 ```
 
-> **Note:** Use `ln -sf` (symlink), not `cp`. A symlink ensures the script stays up to date with `git pull`.
+> **Note:** The local deploy script symlinks configs by default, so `git pull` in `~/.dotfiles` keeps everything up to date automatically.
+
+## Deploy to Local macOS
+
+Run the local deploy script directly or via `~/bin`:
+
+```bash
+deploy-dotfiles-local
+```
+
+### Options
+
+| Flag | Description |
+|------|-------------|
+| _(none)_ | Symlink all configs (default) — stays in sync with `git pull` |
+| `--copy` | Copy files instead of symlinking |
+| `--dry-run` | Preview all actions without making any changes |
+| `--help` | Show usage |
+
+### What it does
+
+1. Checks for Homebrew and installs it if missing
+2. Installs missing dependencies via Homebrew: `neovim`, `tmux`, `jq`, `bc`
+3. Deploys `nvim_init.lua` to `~/.config/nvim/init.lua`
+4. Deploys `tmux.conf` to `~/.tmux.conf` and reloads tmux if running
+5. Deploys `statusline-command.sh` to `~/.claude/` and makes it executable
+6. Merges `claude-settings.json` into `~/.claude/settings.json`
+7. Runs headless Neovim to auto-install plugins via lazy.nvim
+8. Symlinks both deploy scripts into `~/bin`
+
+### Dry run
+
+Preview everything the script would do without touching any files:
+
+```bash
+deploy-dotfiles-local --dry-run
+```
 
 ## Deploy to Remote VMs
 

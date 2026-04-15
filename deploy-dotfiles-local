@@ -1,0 +1,239 @@
+#!/bin/bash
+# Deploy Neovim, tmux, and Claude configs to local macOS
+# Usage:
+#   deploy-dotfiles-local [--copy] [--dry-run]
+#
+# By default, configs are symlinked so `git pull` auto-updates them.
+# Use --copy to copy files instead (useful if you want to edit independently).
+# Use --dry-run to preview all actions without making any changes.
+
+set -euo pipefail
+
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+NVIM_CONFIG="$DOTFILES_DIR/nvim_init.lua"
+TMUX_CONFIG="$DOTFILES_DIR/tmux.conf"
+CLAUDE_STATUSLINE="$DOTFILES_DIR/statusline-command.sh"
+CLAUDE_SETTINGS="$DOTFILES_DIR/claude-settings.json"
+
+USE_SYMLINKS=true
+DRY_RUN=false
+
+for arg in "$@"; do
+  case "$arg" in
+    --copy)     USE_SYMLINKS=false ;;
+    --dry-run)  DRY_RUN=true ;;
+    --help|-h)
+      echo "Usage: $0 [--copy] [--dry-run]"
+      echo ""
+      echo "Deploys Neovim, tmux, and Claude Code configs to the local macOS machine."
+      echo ""
+      echo "Options:"
+      echo "  --copy     Copy files instead of symlinking (default: symlink)"
+      echo "  --dry-run  Preview all actions without making any changes"
+      echo "  --help     Show this help"
+      echo ""
+      echo "Symlinks (default) keep configs in sync with git pull automatically."
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $arg"
+      echo "Run '$0 --help' for usage."
+      exit 1
+      ;;
+  esac
+done
+
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
+info()    { echo "  $*"; }
+success() { echo "  ✓ $*"; }
+warn()    { echo "  ⚠ $*"; }
+dryrun()  { echo "  [dry-run] $*"; }
+
+# run CMD [ARGS...] — executes command, or prints it in dry-run mode
+run() {
+  if [ "$DRY_RUN" = true ]; then
+    dryrun "$*"
+  else
+    "$@"
+  fi
+}
+
+deploy_file() {
+  local src="$1"
+  local dst="$2"
+  local dst_dir
+  dst_dir="$(dirname "$dst")"
+
+  run mkdir -p "$dst_dir"
+
+  if [ "$USE_SYMLINKS" = true ]; then
+    run ln -sf "$src" "$dst"
+    success "Symlink $dst → $src"
+  else
+    run cp "$src" "$dst"
+    success "Copy $src → $dst"
+  fi
+}
+
+# ── macOS check ───────────────────────────────────────────────────────────────
+
+if [ "$(uname)" != "Darwin" ]; then
+  echo "Error: this script is for macOS only."
+  echo "For remote Linux VMs, use: deploy-dotfiles user@host"
+  exit 1
+fi
+
+echo "--- Deploying dotfiles to local macOS ---"
+
+# ── Homebrew ──────────────────────────────────────────────────────────────────
+
+if ! command -v brew >/dev/null 2>&1; then
+  echo ""
+  if [ "$DRY_RUN" = true ]; then
+    dryrun "Homebrew not found — would install via https://brew.sh"
+  else
+    echo "Homebrew is not installed. Installing now..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    # Add brew to PATH for Apple Silicon
+    if [ -f /opt/homebrew/bin/brew ]; then
+      eval "$(/opt/homebrew/bin/brew shellenv)"
+    fi
+  fi
+else
+  success "Homebrew found: $(brew --version | head -1)"
+fi
+
+# ── Dependencies ──────────────────────────────────────────────────────────────
+
+install_if_missing() {
+  local cmd="$1"
+  local pkg="${2:-$1}"
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    if [ "$DRY_RUN" = true ]; then
+      dryrun "$cmd not found — would run: brew install $pkg"
+    else
+      info "Installing $pkg via Homebrew..."
+      brew install "$pkg"
+      success "$pkg installed"
+    fi
+  else
+    success "$cmd found: $($cmd --version 2>&1 | head -1)"
+  fi
+}
+
+echo ""
+echo "Checking dependencies..."
+install_if_missing nvim neovim
+install_if_missing tmux tmux
+install_if_missing jq jq
+install_if_missing bc bc
+
+# ── Neovim config ─────────────────────────────────────────────────────────────
+
+echo ""
+echo "Deploying Neovim config..."
+
+if [ ! -f "$NVIM_CONFIG" ]; then
+  warn "nvim_init.lua not found in $DOTFILES_DIR, skipping"
+else
+  deploy_file "$NVIM_CONFIG" "$HOME/.config/nvim/init.lua"
+fi
+
+# ── Tmux config ───────────────────────────────────────────────────────────────
+
+echo ""
+echo "Deploying tmux config..."
+
+if [ ! -f "$TMUX_CONFIG" ]; then
+  warn "tmux.conf not found in $DOTFILES_DIR, skipping"
+else
+  deploy_file "$TMUX_CONFIG" "$HOME/.tmux.conf"
+  if tmux info >/dev/null 2>&1; then
+    if [ "$DRY_RUN" = true ]; then
+      dryrun "tmux source-file ~/.tmux.conf"
+    else
+      tmux source-file "$HOME/.tmux.conf" 2>/dev/null && success "Tmux config reloaded" || warn "Could not reload tmux config"
+    fi
+  else
+    info "Tmux not running — config will apply on next session"
+  fi
+fi
+
+# ── Claude Code statusline ────────────────────────────────────────────────────
+
+echo ""
+echo "Deploying Claude Code statusline..."
+
+if [ ! -f "$CLAUDE_STATUSLINE" ]; then
+  warn "statusline-command.sh not found in $DOTFILES_DIR, skipping"
+else
+  deploy_file "$CLAUDE_STATUSLINE" "$HOME/.claude/statusline-command.sh"
+  run chmod +x "$HOME/.claude/statusline-command.sh"
+fi
+
+# ── Claude Code settings (always merged, never symlinked) ────────────────────
+
+echo ""
+echo "Merging Claude Code settings..."
+
+if [ ! -f "$CLAUDE_SETTINGS" ]; then
+  warn "claude-settings.json not found in $DOTFILES_DIR, skipping"
+else
+  run mkdir -p "$HOME/.claude"
+  if [ "$DRY_RUN" = true ]; then
+    dryrun "merge claude-settings.json into ~/.claude/settings.json (via jq '. * \$incoming')"
+  else
+    if [ ! -f "$HOME/.claude/settings.json" ]; then
+      echo '{}' > "$HOME/.claude/settings.json"
+      info "Created empty settings.json"
+    fi
+    if command -v jq >/dev/null 2>&1; then
+      incoming=$(tr -d '\n' < "$CLAUDE_SETTINGS")
+      tmp=$(jq --argjson incoming "$incoming" '. * $incoming' "$HOME/.claude/settings.json")
+      echo "$tmp" > "$HOME/.claude/settings.json"
+      success "Merged claude-settings.json into ~/.claude/settings.json"
+    else
+      warn "jq not found, cannot merge settings"
+    fi
+  fi
+fi
+
+# ── Neovim plugin install ─────────────────────────────────────────────────────
+
+echo ""
+echo "Installing Neovim plugins (headless)..."
+if [ "$DRY_RUN" = true ]; then
+  dryrun "nvim --headless \"+Lazy! sync\" +qa"
+elif nvim --headless "+Lazy! sync" +qa 2>/dev/null; then
+  success "Neovim plugins installed/updated"
+else
+  warn "Plugin auto-install failed — run nvim manually to install plugins"
+fi
+
+# ── Self-symlink in ~/bin ─────────────────────────────────────────────────────
+
+echo ""
+echo "Ensuring deploy scripts are in ~/bin..."
+run mkdir -p "$HOME/bin"
+
+for script in deploy-dotfiles deploy-dotfiles-local; do
+  target="$DOTFILES_DIR/$script"
+  link="$HOME/bin/$script"
+  if [ -f "$target" ]; then
+    run ln -sf "$target" "$link"
+    success "~/bin/$script → $target"
+  fi
+done
+
+# ── Done ──────────────────────────────────────────────────────────────────────
+
+echo ""
+echo "--- Done ---"
+echo ""
+echo "Next steps:"
+echo "  • Open a new terminal (or run: source ~/.zshrc) to pick up any PATH changes"
+echo "  • Launch nvim to verify config loaded"
+if [ "$USE_SYMLINKS" = true ]; then
+  echo "  • Run 'git pull' in ~/.dotfiles to keep all configs up to date"
+fi
