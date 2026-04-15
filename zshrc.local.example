@@ -13,12 +13,14 @@ cd() {
 }
 
 # ── find → fd ─────────────────────────────────────────────────────────────────
+unalias find 2>/dev/null
 find() {
   echo "  hint: use 'fd' instead of find (e.g. fd <pattern>)"
   command find "$@"
 }
 
 # ── grep → rg ─────────────────────────────────────────────────────────────────
+unalias grep 2>/dev/null
 grep() {
   echo "  hint: use 'rg' instead of grep (e.g. rg <pattern>)"
   command grep "$@"
