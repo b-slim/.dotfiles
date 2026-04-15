@@ -150,6 +150,24 @@ deploy-dotfiles-local --macos-defaults      # optional: apply system settings
 
 Machine-specific config (work proxies, private env vars, etc.) goes in `~/.zshrc.local` — sourced at the end of `.zshrc`, not tracked in this repo.
 
+### Building muscle memory
+
+`zshrc.local.example` contains nag wrappers that print a hint when you reach for an old command, then run it anyway so nothing breaks:
+
+```bash
+cp ~/.dotfiles/zshrc.local.example ~/.zshrc.local
+source ~/.zshrc
+```
+
+| Old habit | Nag fires | New habit |
+|-----------|-----------|-----------|
+| `cd <path>` | yes | `z <partial>` |
+| `find` | yes | `fd` |
+| `grep` | yes | `rg` |
+| `man <tool>` | yes | `tldr <tool>` |
+
+Remove each wrapper once it feels automatic. Delete `~/.zshrc.local` when done.
+
 ---
 
 ## Git

@@ -1,0 +1,38 @@
+# ~/.zshrc.local.example — training aids to build new muscle memory
+#
+# Copy to ~/.zshrc.local to activate:
+#   cp ~/.dotfiles/zshrc.local.example ~/.zshrc.local
+#
+# Remove or comment out each wrapper once the habit feels automatic.
+# Delete the file entirely when done.
+
+# ── cd → z ────────────────────────────────────────────────────────────────────
+cd() {
+  echo "  hint: use 'z' or 'j' instead of cd"
+  builtin cd "$@"
+}
+
+# ── find → fd ─────────────────────────────────────────────────────────────────
+find() {
+  echo "  hint: use 'fd' instead of find (e.g. fd <pattern>)"
+  command find "$@"
+}
+
+# ── grep → rg ─────────────────────────────────────────────────────────────────
+grep() {
+  echo "  hint: use 'rg' instead of grep (e.g. rg <pattern>)"
+  command grep "$@"
+}
+
+# ── man → tldr ────────────────────────────────────────────────────────────────
+man() {
+  echo "  hint: try 'tldr $*' first for a concise summary"
+  command man "$@"
+}
+
+# ── up arrow → Ctrl+R ─────────────────────────────────────────────────────────
+# Can't intercept the up arrow directly, but this reminder fires on every
+# prompt to nudge you toward Ctrl+R for history search.
+# Uncomment to enable — it prints on every new prompt line (aggressive).
+#
+# precmd() { echo "  hint: use Ctrl+R to search history instead of ↑↑↑"; }
