@@ -1,0 +1,4 @@
+Match host github.com user git
+    IdentityFile ~/.ssh/personal_github_b-slim
+    IdentitiesOnly yes
+    IdentityAgent none

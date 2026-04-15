@@ -21,6 +21,7 @@ GHOSTTY_CONFIG="$DOTFILES_DIR/ghostty.conf"
 GITCONFIG="$DOTFILES_DIR/gitconfig"
 GITCONFIG_LOCAL="$DOTFILES_DIR/gitconfig.local"
 GITCONFIG_PERSONAL="$DOTFILES_DIR/gitconfig.personal"
+SSH_CONFIG_CUSTOM="$DOTFILES_DIR/ssh_config.custom"
 GITIGNORE_GLOBAL="$DOTFILES_DIR/gitignore_global"
 CLAUDE_STATUSLINE="$DOTFILES_DIR/statusline-command.sh"
 CLAUDE_SETTINGS="$DOTFILES_DIR/claude-settings.json"
@@ -216,6 +217,18 @@ if [ -f "$GITCONFIG_PERSONAL" ]; then
   deploy_file "$GITCONFIG_PERSONAL" "$HOME/.gitconfig.personal"
   run mkdir -p "$HOME/perso"
   info "~/perso/ created — repos cloned there will use bslim@apache.org"
+fi
+
+# ── SSH custom config ─────────────────────────────────────────────────────────
+
+echo ""
+echo "Deploying SSH custom config..."
+if [ ! -f "$SSH_CONFIG_CUSTOM" ]; then
+  warn "ssh_config.custom not found in $DOTFILES_DIR, skipping"
+else
+  run mkdir -p "$HOME/.ssh"
+  deploy_file "$SSH_CONFIG_CUSTOM" "$HOME/.ssh/config.custom"
+  run chmod 600 "$HOME/.ssh/config.custom"
 fi
 
 # ── Neovim config ─────────────────────────────────────────────────────────────

@@ -88,3 +88,7 @@
 # ── Identity (machine-specific, not in this repo) ─────────────────────────────
 [include]
     path = ~/.gitconfig.local
+[safe]
+	directory = /Users/sbouguer/.dotfiles
+	directory = /Users/sbouguer/.dotfiles
+	directory = /Users/sbouguer/.dotfiles
