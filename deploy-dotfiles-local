@@ -1,36 +1,49 @@
 #!/bin/bash
-# Deploy Neovim, tmux, and Claude configs to local macOS
+# Deploy Neovim, tmux, zsh, git, Ghostty, and Claude configs to local macOS
 # Usage:
-#   deploy-dotfiles-local [--copy] [--dry-run]
+#   deploy-dotfiles-local [--copy] [--dry-run] [--macos-defaults]
 #
 # By default, configs are symlinked so `git pull` auto-updates them.
 # Use --copy to copy files instead (useful if you want to edit independently).
 # Use --dry-run to preview all actions without making any changes.
+# Use --macos-defaults to also apply macOS system settings (keyboard, Dock, Finder, etc.).
 
 set -euo pipefail
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source files
 NVIM_CONFIG="$DOTFILES_DIR/nvim_init.lua"
 TMUX_CONFIG="$DOTFILES_DIR/tmux.conf"
+ZSHRC="$DOTFILES_DIR/zshrc"
+STARSHIP_CONFIG="$DOTFILES_DIR/starship.toml"
+GHOSTTY_CONFIG="$DOTFILES_DIR/ghostty.conf"
+GITCONFIG="$DOTFILES_DIR/gitconfig"
+GITIGNORE_GLOBAL="$DOTFILES_DIR/gitignore_global"
 CLAUDE_STATUSLINE="$DOTFILES_DIR/statusline-command.sh"
 CLAUDE_SETTINGS="$DOTFILES_DIR/claude-settings.json"
+BREWFILE="$DOTFILES_DIR/Brewfile"
+MACOS_DEFAULTS="$DOTFILES_DIR/macos-defaults.sh"
 
 USE_SYMLINKS=true
 DRY_RUN=false
+RUN_MACOS_DEFAULTS=false
 
 for arg in "$@"; do
   case "$arg" in
-    --copy)     USE_SYMLINKS=false ;;
-    --dry-run)  DRY_RUN=true ;;
+    --copy)           USE_SYMLINKS=false ;;
+    --dry-run)        DRY_RUN=true ;;
+    --macos-defaults) RUN_MACOS_DEFAULTS=true ;;
     --help|-h)
-      echo "Usage: $0 [--copy] [--dry-run]"
+      echo "Usage: $0 [--copy] [--dry-run] [--macos-defaults]"
       echo ""
-      echo "Deploys Neovim, tmux, and Claude Code configs to the local macOS machine."
+      echo "Deploys Neovim, tmux, zsh, git, Ghostty, and Claude Code configs to the local macOS machine."
       echo ""
       echo "Options:"
-      echo "  --copy     Copy files instead of symlinking (default: symlink)"
-      echo "  --dry-run  Preview all actions without making any changes"
-      echo "  --help     Show this help"
+      echo "  --copy           Copy files instead of symlinking (default: symlink)"
+      echo "  --dry-run        Preview all actions without making any changes"
+      echo "  --macos-defaults Also apply macOS system settings (keyboard, Dock, Finder, etc.)"
+      echo "  --help           Show this help"
       echo ""
       echo "Symlinks (default) keep configs in sync with git pull automatically."
       exit 0
@@ -59,6 +72,7 @@ run() {
   fi
 }
 
+# deploy_file SRC DST — symlink or copy SRC to DST, backing up existing regular files
 deploy_file() {
   local src="$1"
   local dst="$2"
@@ -67,12 +81,22 @@ deploy_file() {
 
   run mkdir -p "$dst_dir"
 
+  # Back up existing file if it's a regular file (not already a symlink to us)
+  if [ -f "$dst" ] && [ ! -L "$dst" ]; then
+    if [ "$DRY_RUN" = true ]; then
+      dryrun "backup existing $dst → $dst.bak"
+    else
+      cp "$dst" "$dst.bak"
+      info "Backed up existing $(basename "$dst") → $dst.bak"
+    fi
+  fi
+
   if [ "$USE_SYMLINKS" = true ]; then
     run ln -sf "$src" "$dst"
-    success "Symlink $dst → $src"
+    success "Symlink $(basename "$dst") → $src"
   else
     run cp "$src" "$dst"
-    success "Copy $src → $dst"
+    success "Copied $(basename "$src") → $dst"
   fi
 }
 
@@ -88,14 +112,14 @@ echo "--- Deploying dotfiles to local macOS ---"
 
 # ── Homebrew ──────────────────────────────────────────────────────────────────
 
+echo ""
+echo "Homebrew..."
 if ! command -v brew >/dev/null 2>&1; then
-  echo ""
   if [ "$DRY_RUN" = true ]; then
     dryrun "Homebrew not found — would install via https://brew.sh"
   else
-    echo "Homebrew is not installed. Installing now..."
+    echo "  Homebrew is not installed. Installing now..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    # Add brew to PATH for Apple Silicon
     if [ -f /opt/homebrew/bin/brew ]; then
       eval "$(/opt/homebrew/bin/brew shellenv)"
     fi
@@ -104,8 +128,22 @@ else
   success "Homebrew found: $(brew --version | head -1)"
 fi
 
-# ── Dependencies ──────────────────────────────────────────────────────────────
+# ── Brewfile: install all packages at once ────────────────────────────────────
 
+echo ""
+echo "Installing packages from Brewfile..."
+if [ ! -f "$BREWFILE" ]; then
+  warn "Brewfile not found in $DOTFILES_DIR, skipping"
+else
+  if [ "$DRY_RUN" = true ]; then
+    dryrun "brew bundle --file=$BREWFILE --no-upgrade"
+  else
+    brew bundle --file="$BREWFILE" --no-upgrade || warn "Some Brewfile packages failed to install"
+    success "Brewfile packages installed"
+  fi
+fi
+
+# Ensure critical tools are available (fallback if brew bundle was skipped)
 install_if_missing() {
   local cmd="$1"
   local pkg="${2:-$1}"
@@ -117,23 +155,79 @@ install_if_missing() {
       brew install "$pkg"
       success "$pkg installed"
     fi
-  else
-    success "$cmd found: $($cmd --version 2>&1 | head -1)"
   fi
 }
+install_if_missing nvim neovim
+install_if_missing jq jq
+
+# ── Zsh config ────────────────────────────────────────────────────────────────
 
 echo ""
-echo "Checking dependencies..."
-install_if_missing nvim neovim
-install_if_missing tmux tmux
-install_if_missing jq jq
-install_if_missing bc bc
+echo "Deploying zsh config..."
+if [ ! -f "$ZSHRC" ]; then
+  warn "zshrc not found in $DOTFILES_DIR, skipping"
+else
+  deploy_file "$ZSHRC" "$HOME/.zshrc"
+fi
+
+# ── Starship prompt ───────────────────────────────────────────────────────────
+
+echo ""
+echo "Deploying Starship config..."
+if [ ! -f "$STARSHIP_CONFIG" ]; then
+  warn "starship.toml not found in $DOTFILES_DIR, skipping"
+else
+  deploy_file "$STARSHIP_CONFIG" "$HOME/.config/starship.toml"
+fi
+
+# ── Ghostty config ────────────────────────────────────────────────────────────
+
+echo ""
+echo "Deploying Ghostty config..."
+if [ ! -f "$GHOSTTY_CONFIG" ]; then
+  warn "ghostty.conf not found in $DOTFILES_DIR, skipping"
+else
+  deploy_file "$GHOSTTY_CONFIG" "$HOME/.config/ghostty/config"
+fi
+
+# ── Git config ────────────────────────────────────────────────────────────────
+
+echo ""
+echo "Deploying git config..."
+if [ ! -f "$GITCONFIG" ]; then
+  warn "gitconfig not found in $DOTFILES_DIR, skipping"
+else
+  deploy_file "$GITCONFIG" "$HOME/.gitconfig"
+fi
+
+if [ ! -f "$GITIGNORE_GLOBAL" ]; then
+  warn "gitignore_global not found in $DOTFILES_DIR, skipping"
+else
+  deploy_file "$GITIGNORE_GLOBAL" "$HOME/.gitignore_global"
+fi
+
+# Create ~/.gitconfig.local for identity if it doesn't exist
+if [ ! -f "$HOME/.gitconfig.local" ]; then
+  if [ "$DRY_RUN" = true ]; then
+    dryrun "create ~/.gitconfig.local (identity placeholder)"
+  else
+    cat > "$HOME/.gitconfig.local" <<'EOF'
+# Machine-specific git identity — not tracked in dotfiles
+# Fill in your name and email:
+[user]
+    name = Your Name
+    email = you@example.com
+EOF
+    info "Created ~/.gitconfig.local — edit it to set your name and email"
+  fi
+else
+  success "~/.gitconfig.local already exists"
+fi
 
 # ── Neovim config ─────────────────────────────────────────────────────────────
 
 echo ""
 echo "Deploying Neovim config..."
-
 if [ ! -f "$NVIM_CONFIG" ]; then
   warn "nvim_init.lua not found in $DOTFILES_DIR, skipping"
 else
@@ -144,7 +238,6 @@ fi
 
 echo ""
 echo "Deploying tmux config..."
-
 if [ ! -f "$TMUX_CONFIG" ]; then
   warn "tmux.conf not found in $DOTFILES_DIR, skipping"
 else
@@ -164,7 +257,6 @@ fi
 
 echo ""
 echo "Deploying Claude Code statusline..."
-
 if [ ! -f "$CLAUDE_STATUSLINE" ]; then
   warn "statusline-command.sh not found in $DOTFILES_DIR, skipping"
 else
@@ -176,7 +268,6 @@ fi
 
 echo ""
 echo "Merging Claude Code settings..."
-
 if [ ! -f "$CLAUDE_SETTINGS" ]; then
   warn "claude-settings.json not found in $DOTFILES_DIR, skipping"
 else
@@ -211,6 +302,20 @@ else
   warn "Plugin auto-install failed — run nvim manually to install plugins"
 fi
 
+# ── macOS system defaults (opt-in) ────────────────────────────────────────────
+
+if [ "$RUN_MACOS_DEFAULTS" = true ]; then
+  echo ""
+  echo "Applying macOS system defaults..."
+  if [ ! -f "$MACOS_DEFAULTS" ]; then
+    warn "macos-defaults.sh not found in $DOTFILES_DIR, skipping"
+  elif [ "$DRY_RUN" = true ]; then
+    dryrun "bash $MACOS_DEFAULTS"
+  else
+    bash "$MACOS_DEFAULTS"
+  fi
+fi
+
 # ── Self-symlink in ~/bin ─────────────────────────────────────────────────────
 
 echo ""
@@ -232,8 +337,12 @@ echo ""
 echo "--- Done ---"
 echo ""
 echo "Next steps:"
-echo "  • Open a new terminal (or run: source ~/.zshrc) to pick up any PATH changes"
+echo "  • source ~/.zshrc  (or open a new terminal)"
+echo "  • Edit ~/.gitconfig.local to set your git name and email"
 echo "  • Launch nvim to verify config loaded"
+if [ "$RUN_MACOS_DEFAULTS" = false ]; then
+  echo "  • Run 'deploy-dotfiles-local --macos-defaults' to apply keyboard/Dock/Finder settings"
+fi
 if [ "$USE_SYMLINKS" = true ]; then
   echo "  • Run 'git pull' in ~/.dotfiles to keep all configs up to date"
 fi

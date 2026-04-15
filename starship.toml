@@ -1,0 +1,83 @@
+# Starship prompt config — deployed to ~/.config/starship.toml
+# Docs: https://starship.rs/config/
+
+add_newline = false
+
+# Single-line: dir + git + languages + character
+format = "$directory$git_branch$git_status$python$nodejs$rust$golang$java$character"
+
+# ── Directory ─────────────────────────────────────────────────────────────────
+[directory]
+style = "bold cyan"
+truncation_length = 4
+truncate_to_repo = true
+read_only = " 󰌾"
+read_only_style = "red"
+
+# ── Git ───────────────────────────────────────────────────────────────────────
+[git_branch]
+format = " [$symbol$branch]($style)"
+symbol = " "
+style = "bold purple"
+
+[git_status]
+format = '([$all_status$ahead_behind]($style)) '
+style = "bold red"
+conflicted = "󰕚 "
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+untracked = "?"
+stashed = "󰏗"
+modified = "!"
+staged = "+"
+renamed = "»"
+deleted = "✘"
+
+# ── Languages (only shown when relevant files detected) ───────────────────────
+[python]
+format = ' [$symbol$version]($style)'
+symbol = " "
+style = "yellow"
+detect_extensions = ["py"]
+
+[nodejs]
+format = ' [$symbol$version]($style)'
+symbol = " "
+style = "green"
+detect_files = ["package.json", ".nvmrc"]
+
+[rust]
+format = ' [$symbol$version]($style)'
+symbol = " "
+style = "bold red"
+
+[golang]
+format = ' [$symbol$version]($style)'
+symbol = " "
+style = "bold cyan"
+
+[java]
+format = ' [$symbol$version]($style)'
+symbol = " "
+style = "bold red"
+detect_files = ["pom.xml", "build.gradle"]
+
+# ── Prompt character ──────────────────────────────────────────────────────────
+[character]
+success_symbol = " [❯](bold green)"
+error_symbol = " [❯](bold red)"
+vimcmd_symbol = " [❮](bold green)"
+
+# ── Disabled modules ──────────────────────────────────────────────────────────
+[package]
+disabled = true
+
+[time]
+disabled = true
+
+[username]
+disabled = true
+
+[hostname]
+disabled = true

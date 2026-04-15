@@ -1,0 +1,82 @@
+# ~/.gitignore_global — deployed by deploy-dotfiles-local
+# Applied to all repos without adding to each repo's .gitignore
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+.LSOverride
+
+# ── Editors ───────────────────────────────────────────────────────────────────
+# Vim / Neovim
+*.swp
+*.swo
+*~
+.netrwhist
+Session.vim
+.vim/
+
+# JetBrains (IntelliJ, PyCharm, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# VS Code / Cursor
+.vscode/
+*.code-workspace
+
+# ── Secrets / Credentials ─────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+.netrc
+
+# ── Build artifacts ───────────────────────────────────────────────────────────
+dist/
+build/
+out/
+target/
+*.o
+*.a
+*.so
+*.dylib
+*.class
+
+# ── Languages ─────────────────────────────────────────────────────────────────
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log
+.npm
+.yarn/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Java / Gradle
+.gradle/
+*.class
+hs_err_pid*
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
+.cache/
+tmp/
+temp/

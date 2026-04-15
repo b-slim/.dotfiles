@@ -1,0 +1,90 @@
+# ~/.gitconfig — deployed by deploy-dotfiles-local
+# Identity (name + email) goes in ~/.gitconfig.local — never committed
+
+[core]
+    editor = nvim
+    pager = delta
+    excludesfile = ~/.gitignore_global
+    autocrlf = input
+    whitespace = trailing-space,space-before-tab
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    navigate = true          # n/N to move between diff sections
+    side-by-side = true
+    line-numbers = true
+    hyperlinks = true
+
+[merge]
+    conflictstyle = diff3
+    tool = nvimdiff
+
+[diff]
+    colorMoved = default
+    algorithm = histogram    # better diff algorithm
+
+[pull]
+    rebase = false
+
+[push]
+    default = current
+    autoSetupRemote = true   # auto-set upstream on first push
+
+[fetch]
+    prune = true             # remove remote-tracking refs for deleted branches
+
+[init]
+    defaultBranch = main
+
+[rebase]
+    autoStash = true         # stash/unstash automatically around rebase
+
+[rerere]
+    enabled = true           # remember conflict resolutions
+
+[branch]
+    sort = -committerdate    # show most recently active branches first
+
+# ── Aliases ───────────────────────────────────────────────────────────────────
+[alias]
+    # Pretty log
+    lg  = log --oneline --graph --decorate --all
+    lgs = log --oneline --graph --decorate
+
+    # Status / diff
+    st  = status -s
+    d   = diff
+    ds  = diff --staged
+
+    # Commit shortcuts
+    aa  = add --all
+    cm  = commit -m
+    amend = commit --amend --no-edit
+
+    # Branch
+    co  = checkout
+    br  = branch -v
+    brd = branch -d
+    new = checkout -b
+
+    # Undo last commit (keep changes staged)
+    undo = reset HEAD~1 --mixed
+
+    # Stash including untracked files
+    sa  = stash push --include-untracked
+    sp  = stash pop
+
+    # Show files changed in last commit
+    changed = show --stat --name-only HEAD
+
+    # Find all commits touching a file
+    file-log = log --follow --
+
+    # List all aliases
+    aliases = config --get-regexp alias
+
+# ── Identity (machine-specific, not in this repo) ─────────────────────────────
+[include]
+    path = ~/.gitconfig.local
