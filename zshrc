@@ -181,6 +181,77 @@ serve() { python3 -m http.server "${1:-8000}"; }
 # Show top 10 most used shell commands
 topcmds() { history | awk '{print $2}' | sort | uniq -c | sort -rn | head -10; }
 
+# cheat — quick reference card for this setup
+# Usage: cheat          → full reference
+#        cheat <tool>   → tldr <tool> (community docs)
+cheat() {
+  if [ $# -gt 0 ]; then
+    tldr "$@"
+    return
+  fi
+
+  local b='\033[1m'
+  local c='\033[36m'   # cyan  — section headers
+  local y='\033[33m'   # yellow — keys/commands
+  local g='\033[32m'   # green  — tips
+  local d='\033[2m'    # dim   — descriptions
+  local r='\033[0m'
+
+  echo ""
+  printf "${b}${c}── Navigation ─────────────────────────────────────────────${r}\n"
+  printf "  ${y}z <partial>${r}          ${d}zoxide: jump to frequent dir${r}\n"
+  printf "  ${y}fcd${r}                  ${d}fzf: pick dir → cd (with tree preview)${r}\n"
+  printf "  ${y}..  ...  ....${r}        ${d}up 1 / 2 / 3 levels${r}\n"
+  printf "  ${y}-${r}                    ${d}go to previous dir${r}\n"
+  echo ""
+  printf "${b}${c}── Files ──────────────────────────────────────────────────${r}\n"
+  printf "  ${y}ll${r}                   ${d}eza: list with icons + git status${r}\n"
+  printf "  ${y}lt / ltt${r}             ${d}eza: tree 2 / 3 levels deep${r}\n"
+  printf "  ${y}cat <file>${r}           ${d}bat: syntax-highlighted output${r}\n"
+  printf "  ${y}fv${r}                   ${d}fzf: pick file → open in nvim${r}\n"
+  echo ""
+  printf "${b}${c}── fzf ────────────────────────────────────────────────────${r}\n"
+  printf "  ${y}Ctrl+R${r}               ${d}fuzzy search shell history${r}\n"
+  printf "  ${y}Ctrl+T${r}               ${d}fuzzy file picker → insert path${r}\n"
+  printf "  ${y}Alt+C${r}                ${d}fuzzy dir picker → cd${r}\n"
+  printf "  ${y}fv${r}                   ${d}fzf: pick file → nvim${r}\n"
+  printf "  ${y}fcd${r}                  ${d}fzf: pick dir → cd${r}\n"
+  printf "  ${y}fgl${r}                  ${d}fzf: browse git log + diff preview${r}\n"
+  echo ""
+  printf "${b}${c}── Git ────────────────────────────────────────────────────${r}\n"
+  printf "  ${y}gs${r}                   ${d}git status -s${r}\n"
+  printf "  ${y}gaa${r}                  ${d}git add --all${r}\n"
+  printf "  ${y}gcm 'msg'${r}            ${d}git commit -m${r}\n"
+  printf "  ${y}gp / gpl${r}             ${d}git push / pull${r}\n"
+  printf "  ${y}gd / gds${r}             ${d}git diff / diff --staged${r}\n"
+  printf "  ${y}glog${r}                 ${d}pretty graph log (all branches)${r}\n"
+  printf "  ${y}git undo${r}             ${d}reset last commit, keep changes${r}\n"
+  printf "  ${y}git amend${r}            ${d}amend last commit (no edit)${r}\n"
+  printf "  ${y}git new <name>${r}       ${d}checkout -b${r}\n"
+  printf "  ${y}lg${r}                   ${d}lazygit TUI${r}\n"
+  printf "  ${y}fgl${r}                  ${d}fzf git log browser${r}\n"
+  echo ""
+  printf "${b}${c}── Zsh ────────────────────────────────────────────────────${r}\n"
+  printf "  ${y}→  (right arrow)${r}     ${d}accept autosuggestion${r}\n"
+  printf "  ${y}Ctrl+W${r}               ${d}delete previous word${r}\n"
+  printf "  ${y}Alt+.${r}                ${d}insert last argument of previous command${r}\n"
+  printf "  ${y}Ctrl+U${r}               ${d}clear entire line${r}\n"
+  printf "  ${y}Ctrl+L${r}               ${d}clear screen${r}\n"
+  echo ""
+  printf "${b}${c}── Utils ───────────────────────────────────────────────────${r}\n"
+  printf "  ${y}mkcd <dir>${r}           ${d}mkdir + cd in one step${r}\n"
+  printf "  ${y}extract <file>${r}       ${d}extract any archive format${r}\n"
+  printf "  ${y}serve [port]${r}         ${d}HTTP server in current dir (default 8000)${r}\n"
+  printf "  ${y}topcmds${r}              ${d}top 10 most used shell commands${r}\n"
+  printf "  ${y}brewup${r}               ${d}brew update + upgrade + cleanup${r}\n"
+  printf "  ${y}cleanup${r}              ${d}remove .DS_Store files recursively${r}\n"
+  printf "  ${y}flushdns${r}             ${d}flush macOS DNS cache${r}\n"
+  echo ""
+  printf "  ${g}cheat <tool>${r}         ${d}→ tldr <tool> for community docs${r}\n"
+  printf "  ${g}tldr <tool>${r}          ${d}concise man page (try: tldr fzf, tldr git)${r}\n"
+  echo ""
+}
+
 # ── Prompt: Starship ──────────────────────────────────────────────────────────
 if command -v starship >/dev/null 2>&1; then
   eval "$(starship init zsh)"
