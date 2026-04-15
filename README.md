@@ -15,11 +15,13 @@ Personal Neovim and tmux configurations with a deploy script for remote Linux VM
 
 ## Setup
 
-One-liner install (clone + deploy locally):
+### First-time install (macOS)
 
 ```bash
 git clone git@github.com:b-slim/.dotfiles.git ~/.dotfiles && ~/.dotfiles/deploy-dotfiles-local
 ```
+
+This clones the repo and immediately deploys all configs to your local machine (installs missing deps via Homebrew, symlinks configs, installs Neovim plugins).
 
 Or step by step:
 
