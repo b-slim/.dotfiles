@@ -97,10 +97,10 @@ alias -- -='cd -'          # go to previous dir
 
 # ── Aliases: Files ────────────────────────────────────────────────────────────
 if command -v eza >/dev/null 2>&1; then
-  alias ls='eza --icons --group-directories-first'
-  alias ll='eza -lah --icons --git --group-directories-first'
-  alias lt='eza --tree --icons -L 2 --group-directories-first'
-  alias ltt='eza --tree --icons -L 3 --group-directories-first'
+  alias ls='eza --group-directories-first'
+  alias ll='eza -lah --git --group-directories-first'
+  alias lt='eza --tree -L 2 --group-directories-first'
+  alias ltt='eza --tree -L 3 --group-directories-first'
 else
   alias ls='ls -G'
   alias ll='ls -lahG'
@@ -204,7 +204,7 @@ mkcd() { mkdir -p "$1" && cd "$1"; }
 # fzf + cd into selected directory
 fcd() {
   local dir
-  dir=$(fd --type d --hidden --follow --exclude .git 2>/dev/null | fzf --preview 'eza --tree --icons -L 2 {} 2>/dev/null || ls {}') && cd "$dir"
+  dir=$(fd --type d --hidden --follow --exclude .git 2>/dev/null | fzf --preview 'eza --tree -L 2 {} 2>/dev/null || ls {}') && cd "$dir"
 }
 
 # fzf + open file in nvim
@@ -284,7 +284,7 @@ cheat() {
   printf "  ${y}-${r}                    ${d}go to previous dir${r}\n"
   echo ""
   printf "${b}${c}── Files ──────────────────────────────────────────────────${r}\n"
-  printf "  ${y}ll${r}                   ${d}eza: list with icons + git status${r}\n"
+  printf "  ${y}ll${r}                   ${d}eza: long list with git status${r}\n"
   printf "  ${y}lt / ltt${r}             ${d}eza: tree 2 / 3 levels deep${r}\n"
   printf "  ${y}cat <file>${r}           ${d}bat: syntax-highlighted output${r}\n"
   printf "  ${y}fv${r}                   ${d}fzf: pick file → open in nvim${r}\n"
