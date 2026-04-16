@@ -234,17 +234,22 @@ extract() {
 }
 
 # Connect to a remote VM and attach/create a tmux session
-# Uses mosh if mosh-server is available on the remote, falls back to ssh
-# Usage: vm user@host [session-name]
-# Example: vm user@vm1         → attaches to 'main' session (creates if missing)
-#          vm user@vm1 work    → attaches to 'work' session
+# Usage: vm [--mosh] user@host [session-name]
+#   --mosh  use mosh instead of ssh (requires UDP 60001-60999 open on remote)
+# Example: vm user@vm1           → ssh + tmux 'main' session
+#          vm user@vm1 work      → ssh + tmux 'work' session
+#          vm --mosh user@vm1    → mosh + tmux (non-corporate networks)
 vm() {
+  local use_mosh=false
+  if [ "$1" = "--mosh" ]; then
+    use_mosh=true
+    shift
+  fi
   local host="$1"
   local session="${2:-main}"
-  if ssh "$host" "command -v mosh-server >/dev/null 2>&1"; then
+  if [ "$use_mosh" = true ]; then
     mosh "$host" -- tmux new-session -A -s "$session"
   else
-    echo "  mosh-server not found on $host — using ssh"
     ssh "$host" -t "tmux new-session -A -s '$session'"
   fi
 }
