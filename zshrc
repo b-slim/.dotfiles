@@ -233,6 +233,16 @@ extract() {
   esac
 }
 
+# Connect to a remote VM via mosh and attach/create a tmux session
+# Usage: vm user@host [session-name]
+# Example: vm user@vm1         → attaches to 'main' session (creates if missing)
+#          vm user@vm1 work    → attaches to 'work' session
+vm() {
+  local host="$1"
+  local session="${2:-main}"
+  mosh "$host" -- tmux new-session -A -s "$session"
+}
+
 # Quick HTTP server in current dir
 serve() { python3 -m http.server "${1:-8000}"; }
 
@@ -307,6 +317,14 @@ cheat() {
   echo ""
   printf "  ${g}cheat <tool>${r}         ${d}→ tldr <tool> for community docs${r}\n"
   printf "  ${g}tldr <tool>${r}          ${d}concise man page (try: tldr fzf, tldr git)${r}\n"
+  echo ""
+  printf "${b}${c}── SSH / VM ─────────────────────────────────────────────────${r}\n"
+  printf "  ${y}vm <host> [session]${r}  ${d}mosh + tmux attach/create in one command${r}\n"
+  printf "  ${y}mosh <host>${r}          ${d}better SSH: survives sleep/wake/roaming${r}\n"
+  printf "  ${y}Prefix+s${r}             ${d}tmux: list and switch sessions${r}\n"
+  printf "  ${y}Prefix+d${r}             ${d}tmux: detach (session keeps running)${r}\n"
+  printf "  ${y}Prefix+r${r}             ${d}tmux: reload config${r}\n"
+  printf "  ${y}Prefix+I${r}             ${d}tmux: install plugins (TPM)${r}\n"
   echo ""
   printf "${b}${c}── Docker ──────────────────────────────────────────────────${r}\n"
   printf "  ${y}colstart / colstop${r}   ${d}start/stop colima Docker daemon${r}\n"
