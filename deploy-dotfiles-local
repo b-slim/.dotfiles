@@ -200,7 +200,19 @@ echo "Deploying git config..."
 if [ ! -f "$GITCONFIG" ]; then
   warn "gitconfig not found in $DOTFILES_DIR, skipping"
 else
-  deploy_file "$GITCONFIG" "$HOME/.gitconfig"
+  # Always copy (never symlink) — git writes [safe] entries back to ~/.gitconfig
+  # which would corrupt the source file if it were a symlink into the repo
+  run mkdir -p "$HOME"
+  if [ -f "$HOME/.gitconfig" ] && [ ! -L "$HOME/.gitconfig" ]; then
+    if [ "$DRY_RUN" = true ]; then
+      dryrun "backup existing ~/.gitconfig → ~/.gitconfig.bak"
+    else
+      cp "$HOME/.gitconfig" "$HOME/.gitconfig.bak"
+      info "Backed up existing .gitconfig → .gitconfig.bak"
+    fi
+  fi
+  run cp "$GITCONFIG" "$HOME/.gitconfig"
+  success "Copied gitconfig → ~/.gitconfig"
 fi
 
 if [ ! -f "$GITIGNORE_GLOBAL" ]; then
@@ -238,7 +250,8 @@ echo "Setting up jenv..."
 if ! command -v jenv >/dev/null 2>&1; then
   warn "jenv not found, skipping (run brew bundle first)"
 else
-  # Enable essential plugins
+  # Enable essential plugins (requires jenv init in same shell)
+  eval "$(jenv init -)" 2>/dev/null || true
   for plugin in export maven gradle; do
     if [ "$DRY_RUN" = true ]; then
       dryrun "jenv enable-plugin $plugin"
