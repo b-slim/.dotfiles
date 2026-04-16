@@ -91,9 +91,7 @@
 
 
 
+
 [safe]
     directory = *
-	directory = /Users/sbouguer/.dotfiles
-	directory = /Users/sbouguer/.dotfiles
-	directory = /Users/sbouguer/.dotfiles
 	directory = /Users/sbouguer/.dotfiles
