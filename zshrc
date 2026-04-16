@@ -52,16 +52,28 @@ zstyle ':completion::complete:*' cache-path "$HOME/.zcompcache"
 # ── Plugins ───────────────────────────────────────────────────────────────────
 
 # zsh-autosuggestions — fish-like inline suggestions
-if [ -n "$BREW_PREFIX" ] && [ -f "$BREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
-  source "$BREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
-  ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#6c7086"  # subtle grey
-fi
+for _zas in \
+  "${BREW_PREFIX}/share/zsh-autosuggestions/zsh-autosuggestions.zsh" \
+  "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh" \
+  "/usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh"; do
+  [ -f "$_zas" ] && { source "$_zas"; break; }
+done
+unset _zas
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#6c7086"  # subtle grey
 
 # fzf — fuzzy finder (Ctrl+R history, Ctrl+T files, Alt+C dirs)
-if [ -n "$BREW_PREFIX" ] && [ -d "$BREW_PREFIX/opt/fzf" ]; then
-  source "$BREW_PREFIX/opt/fzf/shell/completion.zsh" 2>/dev/null
-  source "$BREW_PREFIX/opt/fzf/shell/key-bindings.zsh"
+if command -v fzf >/dev/null 2>&1; then
+  # fzf >= 0.48: built-in shell integration (works everywhere)
+  if fzf --zsh >/dev/null 2>&1; then
+    eval "$(fzf --zsh)"
+  elif [ -n "$BREW_PREFIX" ] && [ -d "$BREW_PREFIX/opt/fzf" ]; then
+    source "$BREW_PREFIX/opt/fzf/shell/completion.zsh" 2>/dev/null
+    source "$BREW_PREFIX/opt/fzf/shell/key-bindings.zsh"
+  elif [ -d "$HOME/.fzf" ]; then
+    source "$HOME/.fzf/shell/completion.zsh" 2>/dev/null
+    source "$HOME/.fzf/shell/key-bindings.zsh"
+  fi
 fi
 
 # fzf config
@@ -152,11 +164,6 @@ alias dcdown='docker-compose down'
 alias dclogs='docker-compose logs -f'
 command -v lazydocker >/dev/null && alias lzd='lazydocker'
 
-# Colima (Docker daemon) shortcuts
-alias colstart='colima start'
-alias colstop='colima stop'
-alias colstatus='colima status'
-
 # ── Aliases: Kubernetes ───────────────────────────────────────────────────────
 alias k='kubectl'
 alias kgp='kubectl get pods'
@@ -188,12 +195,17 @@ alias mvnt='mvn test'
 alias mvnst='mvn install -DskipTests'
 alias mvntree='mvn dependency:tree'
 
-# ── Aliases: macOS ────────────────────────────────────────────────────────────
-alias showfiles='defaults write com.apple.finder AppleShowAllFiles YES && killall Finder'
-alias hidefiles='defaults write com.apple.finder AppleShowAllFiles NO && killall Finder'
-alias flushdns='sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder'
-alias cleanup='find . -name "*.DS_Store" -delete && find . -name "._*" -delete'
-alias brewup='brew update && brew upgrade && brew cleanup'
+# ── Aliases: macOS (skipped on Linux) ────────────────────────────────────────
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  alias showfiles='defaults write com.apple.finder AppleShowAllFiles YES && killall Finder'
+  alias hidefiles='defaults write com.apple.finder AppleShowAllFiles NO && killall Finder'
+  alias flushdns='sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder'
+  alias cleanup='find . -name "*.DS_Store" -delete && find . -name "._*" -delete'
+  alias brewup='brew update && brew upgrade && brew cleanup'
+  alias colstart='colima start'
+  alias colstop='colima stop'
+  alias colstatus='colima status'
+fi
 alias path='echo $PATH | tr ":" "\n"'
 
 # ── Functions ─────────────────────────────────────────────────────────────────
@@ -330,7 +342,7 @@ cheat() {
   printf "  ${g}tldr <tool>${r}          ${d}concise man page (try: tldr fzf, tldr git)${r}\n"
   echo ""
   printf "${b}${c}── SSH / VM ─────────────────────────────────────────────────${r}\n"
-  printf "  ${y}vm <host> [session]${r}  ${d}mosh + tmux attach/create in one command${r}\n"
+  printf "  ${y}vm <host> [session]${r}  ${d}ssh + tmux attach/create in one command${r}\n"
   printf "  ${y}mosh <host>${r}          ${d}better SSH: survives sleep/wake/roaming${r}\n"
   printf "  ${y}Prefix+s${r}             ${d}tmux: list and switch sessions${r}\n"
   printf "  ${y}Prefix+d${r}             ${d}tmux: detach (session keeps running)${r}\n"
@@ -377,9 +389,13 @@ if command -v starship >/dev/null 2>&1; then
 fi
 
 # ── zsh-syntax-highlighting (must be sourced last) ────────────────────────────
-if [ -n "$BREW_PREFIX" ] && [ -f "$BREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
-  source "$BREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-fi
+for _zsh in \
+  "${BREW_PREFIX}/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" \
+  "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" \
+  "/usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"; do
+  [ -f "$_zsh" ] && { source "$_zsh"; break; }
+done
+unset _zsh
 
 # ── Local overrides ───────────────────────────────────────────────────────────
 # Put machine-specific config (work proxies, private env vars, etc.) in ~/.zshrc.local

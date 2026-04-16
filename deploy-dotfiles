@@ -9,6 +9,7 @@ set -euo pipefail
 DOTFILES_DIR="$HOME/.dotfiles"
 NVIM_CONFIG="$DOTFILES_DIR/nvim_init.lua"
 TMUX_CONFIG="$DOTFILES_DIR/tmux.conf"
+ZSHRC="$DOTFILES_DIR/zshrc"
 CLAUDE_STATUSLINE="$DOTFILES_DIR/statusline-command.sh"
 CLAUDE_SETTINGS="$DOTFILES_DIR/claude-settings.json"
 
@@ -67,6 +68,64 @@ for host in "$@"; do
       echo "  Neovim updated to $(nvim --version | head -1)"
     fi
   '
+
+  # Install zsh + plugins
+  ssh "$host" '
+    # Install zsh
+    if command -v zsh >/dev/null 2>&1; then
+      echo "  zsh already installed: $(zsh --version | head -1)"
+    elif command -v tdnf >/dev/null 2>&1 && sudo -n tdnf install -y zsh 2>/dev/null; then
+      echo "  zsh installed via tdnf"
+    elif command -v dnf >/dev/null 2>&1 && sudo -n dnf install -y zsh 2>/dev/null; then
+      echo "  zsh installed via dnf"
+    elif command -v apt-get >/dev/null 2>&1 && sudo -n apt-get install -y zsh 2>/dev/null; then
+      echo "  zsh installed via apt-get"
+    else
+      echo "  Warning: could not install zsh"
+    fi
+
+    # Install fzf (clone + install binary only)
+    if command -v fzf >/dev/null 2>&1; then
+      echo "  fzf already installed"
+    elif [ ! -d "$HOME/.fzf" ]; then
+      git clone --depth=1 https://github.com/junegunn/fzf "$HOME/.fzf" --quiet \
+        && "$HOME/.fzf/install" --bin --no-update-rc --no-bash --no-fish --no-zsh 2>/dev/null \
+        && echo "  fzf installed" || echo "  Warning: fzf install failed"
+    fi
+
+    # Install zsh-autosuggestions
+    if [ ! -d "$HOME/.zsh/zsh-autosuggestions" ]; then
+      mkdir -p "$HOME/.zsh"
+      git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions \
+        "$HOME/.zsh/zsh-autosuggestions" --quiet \
+        && echo "  zsh-autosuggestions installed" || echo "  Warning: zsh-autosuggestions install failed"
+    else
+      echo "  zsh-autosuggestions already installed"
+    fi
+
+    # Install zsh-syntax-highlighting
+    if [ ! -d "$HOME/.zsh/zsh-syntax-highlighting" ]; then
+      git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting \
+        "$HOME/.zsh/zsh-syntax-highlighting" --quiet \
+        && echo "  zsh-syntax-highlighting installed" || echo "  Warning: zsh-syntax-highlighting install failed"
+    else
+      echo "  zsh-syntax-highlighting already installed"
+    fi
+
+    # Install zoxide
+    if command -v zoxide >/dev/null 2>&1; then
+      echo "  zoxide already installed"
+    else
+      curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh 2>/dev/null \
+        && echo "  zoxide installed" || echo "  Warning: zoxide install failed"
+    fi
+  '
+
+  # Deploy zshrc
+  if [ -f "$ZSHRC" ]; then
+    cat "$ZSHRC" | ssh "$host" "cat > ~/.zshrc"
+    echo "  zshrc deployed"
+  fi
 
   # Copy configs via SSH pipe (handles hostnames with / like trino-deployer/freezing-silicon)
   ssh "$host" "mkdir -p ~/.config/nvim"
