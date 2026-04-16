@@ -21,6 +21,22 @@ fi
 for host in "$@"; do
   echo "--- Deploying to $host ---"
 
+  # Install mosh-server if missing (detects package manager)
+  ssh "$host" '
+    if command -v mosh-server >/dev/null 2>&1; then
+      echo "  mosh-server already installed"
+    elif command -v tdnf >/dev/null 2>&1 && sudo -n tdnf install -y mosh 2>/dev/null; then
+      echo "  mosh installed via tdnf"
+    elif command -v dnf >/dev/null 2>&1 && sudo -n dnf install -y mosh 2>/dev/null; then
+      echo "  mosh installed via dnf"
+    elif command -v apt-get >/dev/null 2>&1 && sudo -n apt-get install -y mosh 2>/dev/null; then
+      echo "  mosh installed via apt-get"
+    else
+      echo "  Warning: could not install mosh-server (no sudo or unsupported package manager)"
+      echo "  To install manually: sudo tdnf install mosh"
+    fi
+  '
+
   # Update Neovim if missing or version < 0.8.0
   ssh "$host" '
     need_update=false
