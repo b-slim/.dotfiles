@@ -312,6 +312,23 @@ else
   else
     info "Tmux not running — config will apply on next session"
   fi
+
+  # TPM — Tmux Plugin Manager
+  echo ""
+  echo "Setting up TPM and tmux plugins..."
+  if [ "$DRY_RUN" = true ]; then
+    dryrun "git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm"
+    dryrun "~/.tmux/plugins/tpm/bin/install_plugins"
+  else
+    if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
+      git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" --depth=1
+      success "TPM installed"
+    else
+      success "TPM already installed"
+    fi
+    "$HOME/.tmux/plugins/tpm/bin/install_plugins" 2>/dev/null && success "Tmux plugins installed" \
+      || warn "Plugin install failed — open tmux and press Prefix+I to install manually"
+  fi
 fi
 
 # ── Claude Code statusline ────────────────────────────────────────────────────

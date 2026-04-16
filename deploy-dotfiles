@@ -60,6 +60,20 @@ for host in "$@"; do
   if [ -f "$TMUX_CONFIG" ]; then
     cat "$TMUX_CONFIG" | ssh "$host" "cat > ~/.tmux.conf"
     ssh "$host" 'tmux source-file ~/.tmux.conf 2>/dev/null || echo "  Note: tmux not running, config will apply on next session"'
+
+    # Install TPM and plugins on remote
+    ssh "$host" '
+      if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
+        echo "  Installing TPM..."
+        git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" --depth=1 --quiet \
+          && echo "  TPM installed"
+      else
+        echo "  TPM already installed"
+      fi
+      "$HOME/.tmux/plugins/tpm/bin/install_plugins" 2>/dev/null \
+        && echo "  Tmux plugins installed" \
+        || echo "  Note: open tmux and press Prefix+I to install plugins manually"
+    '
   fi
 
   # Copy Claude statusline
