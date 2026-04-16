@@ -1,3 +1,15 @@
+# ~/.ssh/config.custom — included by LinkedIn-managed ~/.ssh/config
+# chmod 600 is set by deploy-dotfiles-local
+
+# ── Multiplexing — reuse existing connections (subsequent SSH is instant) ─────
+Host *
+    ControlMaster auto
+    ControlPath ~/.ssh/cm_%r@%h:%p
+    ControlPersist 10m
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+
+# ── Personal GitHub SSH key ───────────────────────────────────────────────────
 Match host github.com user git
     IdentityFile ~/.ssh/personal_github_b-slim
     IdentitiesOnly yes

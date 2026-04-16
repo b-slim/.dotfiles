@@ -136,6 +136,43 @@ command -v ripgrep >/dev/null && alias grep='rg'
 command -v lazygit >/dev/null && alias lg='lazygit'
 alias j='z'                   # zoxide shorthand
 
+# ── Aliases: Docker ──────────────────────────────────────────────────────────
+alias d='docker'
+alias dps='docker ps'
+alias dpsa='docker ps -a'
+alias di='docker images'
+alias dex='docker exec -it'
+alias dl='docker logs'
+alias dlf='docker logs -f'
+alias drm='docker rm'
+alias drmi='docker rmi'
+alias dcp='docker-compose'
+alias dcup='docker-compose up -d'
+alias dcdown='docker-compose down'
+alias dclogs='docker-compose logs -f'
+command -v lazydocker >/dev/null && alias lzd='lazydocker'
+
+# Colima (Docker daemon) shortcuts
+alias colstart='colima start'
+alias colstop='colima stop'
+alias colstatus='colima status'
+
+# ── Aliases: Kubernetes ───────────────────────────────────────────────────────
+alias k='kubectl'
+alias kgp='kubectl get pods'
+alias kgpa='kubectl get pods --all-namespaces'
+alias kgs='kubectl get services'
+alias kgd='kubectl get deployments'
+alias kgn='kubectl get nodes'
+alias kl='kubectl logs'
+alias klf='kubectl logs -f'
+alias kex='kubectl exec -it'
+alias kdp='kubectl describe pod'
+alias kds='kubectl describe service'
+alias kctx='kubectx'
+alias kns='kubens'
+alias k9='k9s'
+
 # ── Aliases: Java ────────────────────────────────────────────────────────────
 alias jv='jenv version'           # show active JDK
 alias jvs='jenv versions'         # list all registered JDKs
@@ -270,6 +307,27 @@ cheat() {
   echo ""
   printf "  ${g}cheat <tool>${r}         ${d}→ tldr <tool> for community docs${r}\n"
   printf "  ${g}tldr <tool>${r}          ${d}concise man page (try: tldr fzf, tldr git)${r}\n"
+  echo ""
+  printf "${b}${c}── Docker ──────────────────────────────────────────────────${r}\n"
+  printf "  ${y}colstart / colstop${r}   ${d}start/stop colima Docker daemon${r}\n"
+  printf "  ${y}dps / dpsa${r}           ${d}docker ps / ps --all${r}\n"
+  printf "  ${y}di${r}                   ${d}docker images${r}\n"
+  printf "  ${y}dex <ctr> <cmd>${r}      ${d}docker exec -it${r}\n"
+  printf "  ${y}dlf <ctr>${r}            ${d}docker logs -f${r}\n"
+  printf "  ${y}dcup / dcdown${r}        ${d}docker-compose up -d / down${r}\n"
+  printf "  ${y}dclogs${r}               ${d}docker-compose logs -f${r}\n"
+  printf "  ${y}lzd${r}                  ${d}lazydocker TUI${r}\n"
+  printf "  ${y}dive <image>${r}         ${d}inspect image layers${r}\n"
+  echo ""
+  printf "${b}${c}── Kubernetes ──────────────────────────────────────────────${r}\n"
+  printf "  ${y}k9 / k9s${r}             ${d}Kubernetes TUI${r}\n"
+  printf "  ${y}kctx <ctx>${r}           ${d}switch cluster context${r}\n"
+  printf "  ${y}kns <ns>${r}             ${d}switch namespace${r}\n"
+  printf "  ${y}kgp / kgpa${r}           ${d}get pods / all namespaces${r}\n"
+  printf "  ${y}kgs / kgd / kgn${r}      ${d}get services / deployments / nodes${r}\n"
+  printf "  ${y}klf <pod>${r}            ${d}kubectl logs -f${r}\n"
+  printf "  ${y}kex <pod> <cmd>${r}      ${d}kubectl exec -it${r}\n"
+  printf "  ${y}kdp / kds <name>${r}     ${d}describe pod / service${r}\n"
   echo ""
   printf "${b}${c}── Java / jenv ─────────────────────────────────────────────${r}\n"
   printf "  ${y}jv${r}                   ${d}show active JDK version${r}\n"

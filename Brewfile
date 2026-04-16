@@ -36,6 +36,21 @@ brew "tldr"             # concise man pages
 brew "htop"
 brew "watch"
 
+# ── SSH ───────────────────────────────────────────────────────────────────────
+brew "mosh"             # better SSH: survives sleep/wake and network roaming
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+brew "colima"           # lightweight Docker daemon (replaces Docker Desktop)
+brew "docker"           # docker CLI
+brew "docker-compose"   # multi-container apps
+brew "lazydocker"       # TUI for Docker (containers, images, volumes)
+brew "dive"             # inspect Docker image layers
+
+# ── Kubernetes ────────────────────────────────────────────────────────────────
+brew "kubectl"          # K8s CLI
+brew "k9s"              # TUI for Kubernetes
+brew "kubectx"          # kubectx + kubens: switch contexts and namespaces fast
+
 # ── Java ──────────────────────────────────────────────────────────────────────
 brew "jenv"             # Java version manager (per-directory via .java-version)
 brew "maven"            # build tool

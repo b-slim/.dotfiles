@@ -363,10 +363,81 @@ brew bundle --file=~/.dotfiles/Brewfile
 | `watch` | Run command repeatedly |
 | `font-jetbrains-mono-nerd-font` | Terminal font with icons |
 | `ghostty` | Terminal emulator |
+| `mosh` | Better SSH — survives sleep/wake and network roaming |
+| `colima` | Lightweight Docker daemon (replaces Docker Desktop) |
+| `docker` | Docker CLI |
+| `docker-compose` | Multi-container apps |
+| `lazydocker` | TUI for Docker |
+| `dive` | Inspect Docker image layers |
+| `kubectl` | Kubernetes CLI |
+| `k9s` | Kubernetes TUI |
+| `kubectx` | Switch cluster contexts and namespaces fast |
 | `jenv` | Java version manager (per-directory via `.java-version`) |
 | `maven` | Build tool |
 | `temurin@21` | Eclipse Temurin JDK 21 (current LTS) |
 | `temurin@17` | Eclipse Temurin JDK 17 (previous LTS) |
+
+---
+
+## SSH
+
+`~/.ssh/config.custom` configures:
+
+| Setting | Value | Effect |
+|---------|-------|--------|
+| `ControlMaster auto` | All hosts | Reuses existing TCP connection — subsequent SSH to same host is instant |
+| `ControlPersist 10m` | All hosts | Keeps the master connection alive 10 min after last session |
+| `ServerAliveInterval 60` | All hosts | Sends keepalive every 60s — prevents idle disconnects |
+| Personal key | `github.com` git | Routes to `~/.ssh/personal_github_b-slim` |
+
+**mosh** — use instead of `ssh` for remote VMs. Survives sleep/wake, network switches, and high latency:
+
+```bash
+mosh user@vm1          # instead of ssh user@vm1
+```
+
+---
+
+## Docker
+
+Colima provides the Docker daemon without Docker Desktop.
+
+```bash
+colstart               # start Docker daemon
+colstop                # stop it
+```
+
+### Aliases
+
+| Alias | Command |
+|-------|---------|
+| `dps` / `dpsa` | `docker ps` / `docker ps -a` |
+| `di` | `docker images` |
+| `dex <ctr> <cmd>` | `docker exec -it` |
+| `dlf <ctr>` | `docker logs -f` |
+| `drm` / `drmi` | `docker rm` / `docker rmi` |
+| `dcup` / `dcdown` | `docker-compose up -d` / `down` |
+| `dclogs` | `docker-compose logs -f` |
+| `lzd` | `lazydocker` TUI |
+| `dive <image>` | Inspect image layers |
+
+---
+
+## Kubernetes
+
+### Aliases
+
+| Alias | Command |
+|-------|---------|
+| `k` | `kubectl` |
+| `k9` / `k9s` | Kubernetes TUI |
+| `kctx <ctx>` | `kubectx` — switch cluster context |
+| `kns <ns>` | `kubens` — switch namespace |
+| `kgp` / `kgpa` | `get pods` / `get pods --all-namespaces` |
+| `kgs` / `kgd` / `kgn` | `get services` / `deployments` / `nodes` |
+| `klf <pod>` | `kubectl logs -f` |
+| `kex <pod> <cmd>` | `kubectl exec -it` |
+| `kdp` / `kds` | `describe pod` / `describe service` |
 
 ---
 
