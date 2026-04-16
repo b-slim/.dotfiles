@@ -55,7 +55,6 @@ brew "kubectx"          # kubectx + kubens: switch contexts and namespaces fast
 brew "jenv"             # Java version manager (per-directory via .java-version)
 brew "maven"            # build tool
 
-tap "homebrew/cask-versions"
 cask "temurin@21"       # Eclipse Temurin JDK 21 (current LTS)
 cask "temurin@17"       # Eclipse Temurin JDK 17 (previous LTS)
 
