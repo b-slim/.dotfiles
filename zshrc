@@ -266,6 +266,16 @@ vm() {
   fi
 }
 
+# Wrap `claude` to default the session name to the current working directory
+# (respects an explicit -n/--name if the user provided one).
+claude() {
+  if [[ "$*" == *"-n "* || "$*" == *"--name "* ]]; then
+    command claude "$@"
+  else
+    command claude -n "✳️  ${PWD/#$HOME/~}" "$@"
+  fi
+}
+
 # Quick HTTP server in current dir
 serve() { python3 -m http.server "${1:-8000}"; }
 
