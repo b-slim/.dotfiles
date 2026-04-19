@@ -57,6 +57,7 @@ brew "maven"            # build tool
 
 cask "temurin@21"       # Eclipse Temurin JDK 21 (current LTS)
 cask "temurin@17"       # Eclipse Temurin JDK 17 (previous LTS)
+cask "jdk-mission-control"  # JVM profiling and diagnostics tool
 
 # ── Fonts ─────────────────────────────────────────────────────────────────────
 cask "font-jetbrains-mono-nerd-font"
