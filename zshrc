@@ -95,8 +95,10 @@ if command -v zoxide >/dev/null 2>&1; then
 fi
 
 # ── jenv — Java version manager ──────────────────────────────────────────────
-if [ -d "$HOME/.jenv/bin" ]; then
-  export PATH="$HOME/.jenv/bin:$PATH"
+# Support both Homebrew-installed jenv (`brew install jenv`) and the
+# git-clone install (~/.jenv/bin).
+[ -d "$HOME/.jenv/bin" ] && export PATH="$HOME/.jenv/bin:$PATH"
+if command -v jenv >/dev/null 2>&1; then
   eval "$(jenv init -)"
 fi
 
