@@ -10,6 +10,7 @@ DOTFILES_DIR="$HOME/.dotfiles"
 NVIM_CONFIG="$DOTFILES_DIR/nvim_init.lua"
 TMUX_CONFIG="$DOTFILES_DIR/tmux.conf"
 ZSHRC="$DOTFILES_DIR/zshrc"
+STARSHIP_CONFIG="$DOTFILES_DIR/starship.toml"
 CLAUDE_STATUSLINE="$DOTFILES_DIR/statusline-command.sh"
 CLAUDE_SETTINGS="$DOTFILES_DIR/claude-settings.json"
 
@@ -84,15 +85,6 @@ for host in "$@"; do
       echo "  Warning: could not install zsh"
     fi
 
-    # Install fzf (clone + install binary only)
-    if command -v fzf >/dev/null 2>&1; then
-      echo "  fzf already installed"
-    elif [ ! -d "$HOME/.fzf" ]; then
-      git clone --depth=1 https://github.com/junegunn/fzf "$HOME/.fzf" --quiet \
-        && "$HOME/.fzf/install" --bin --no-update-rc --no-bash --no-fish --no-zsh 2>/dev/null \
-        && echo "  fzf installed" || echo "  Warning: fzf install failed"
-    fi
-
     # Install zsh-autosuggestions
     if [ ! -d "$HOME/.zsh/zsh-autosuggestions" ]; then
       mkdir -p "$HOME/.zsh"
@@ -119,12 +111,92 @@ for host in "$@"; do
       curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh 2>/dev/null \
         && echo "  zoxide installed" || echo "  Warning: zoxide install failed"
     fi
+
+    # Install starship (prompt)
+    if command -v starship >/dev/null 2>&1; then
+      echo "  starship already installed"
+    else
+      mkdir -p "$HOME/.local/bin"
+      curl -sS https://starship.rs/install.sh | sh -s -- -y -b "$HOME/.local/bin" >/dev/null 2>&1 \
+        && echo "  starship installed" || echo "  Warning: starship install failed"
+    fi
+
+    # Install modern CLI tools (eza, bat, fd, ripgrep, fzf) from GitHub release
+    # tarballs into ~/.local/bin — no sudo required. Linux x86_64 only for now.
+    gh_latest_tag() {
+      curl -sI "https://github.com/$1/releases/latest" \
+        | awk -F/ "tolower(\$0) ~ /^location:/ {gsub(/[\r\n]/,\"\",\$NF); print \$NF}"
+    }
+    install_bin_from_tar() {
+      local url="$1" bin_name="$2" tmp found
+      mkdir -p "$HOME/.local/bin"
+      tmp=$(mktemp -d) || return 1
+      if ! curl -sSLf "$url" -o "$tmp/pkg.tgz" 2>/dev/null; then
+        rm -rf "$tmp"; return 1
+      fi
+      tar -C "$tmp" -xzf "$tmp/pkg.tgz" 2>/dev/null || { rm -rf "$tmp"; return 1; }
+      found=$(find "$tmp" -type f -name "$bin_name" 2>/dev/null | head -1)
+      if [ -z "$found" ]; then
+        rm -rf "$tmp"; return 1
+      fi
+      cp "$found" "$HOME/.local/bin/$bin_name"
+      chmod +x "$HOME/.local/bin/$bin_name"
+      rm -rf "$tmp"
+      return 0
+    }
+    try_install() {
+      local bin_name="$1" url="$2"
+      if command -v "$bin_name" >/dev/null 2>&1; then
+        echo "  $bin_name already installed"
+      elif install_bin_from_tar "$url" "$bin_name"; then
+        echo "  $bin_name installed (binary)"
+      else
+        echo "  Warning: $bin_name install failed"
+      fi
+    }
+
+    if [ "$(uname -s)" = "Linux" ] && [ "$(uname -m)" = "x86_64" ]; then
+      # eza — asset filename has no version, use /latest/download/
+      try_install eza \
+        "https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-gnu.tar.gz"
+
+      # bat, fd — tags like v0.24.0, filename embeds tag
+      v=$(gh_latest_tag sharkdp/bat)
+      try_install bat \
+        "https://github.com/sharkdp/bat/releases/download/${v}/bat-${v}-x86_64-unknown-linux-gnu.tar.gz"
+      v=$(gh_latest_tag sharkdp/fd)
+      try_install fd \
+        "https://github.com/sharkdp/fd/releases/download/${v}/fd-${v}-x86_64-unknown-linux-gnu.tar.gz"
+
+      # ripgrep — tag has no "v" prefix (e.g. 14.1.0), musl for portability
+      v=$(gh_latest_tag BurntSushi/ripgrep)
+      try_install rg \
+        "https://github.com/BurntSushi/ripgrep/releases/download/${v}/ripgrep-${v}-x86_64-unknown-linux-musl.tar.gz"
+
+      # fzf — tag v0.56.3, filename uses version without "v"
+      v=$(gh_latest_tag junegunn/fzf)
+      try_install fzf \
+        "https://github.com/junegunn/fzf/releases/download/${v}/fzf-${v#v}-linux_amd64.tar.gz"
+    else
+      echo "  Note: skipping binary installers (not Linux x86_64)"
+    fi
+
+    # Note: we do not run chsh — LDAP-backed users cannot change their login
+    # shell locally, and chsh often hangs waiting for a password. tmux.conf
+    # sets default-shell to zsh so `vm <host>` lands you in zsh regardless.
   '
 
   # Deploy zshrc
   if [ -f "$ZSHRC" ]; then
     cat "$ZSHRC" | ssh "$host" "cat > ~/.zshrc"
     echo "  zshrc deployed"
+  fi
+
+  # Deploy starship config
+  if [ -f "$STARSHIP_CONFIG" ]; then
+    ssh "$host" "mkdir -p ~/.config"
+    cat "$STARSHIP_CONFIG" | ssh "$host" "cat > ~/.config/starship.toml"
+    echo "  starship.toml deployed"
   fi
 
   # Copy configs via SSH pipe (handles hostnames with / like trino-deployer/freezing-silicon)

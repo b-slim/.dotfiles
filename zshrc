@@ -115,9 +115,17 @@ if command -v eza >/dev/null 2>&1; then
   alias ll='eza -lah --git --group-directories-first'
   alias lt='eza --tree -L 2 --group-directories-first'
   alias ltt='eza --tree -L 3 --group-directories-first'
-else
+elif [[ "$OSTYPE" == "darwin"* ]]; then
   alias ls='ls -G'
   alias ll='ls -lahG'
+else
+  # Linux/BSD: GNU ls uses --color=auto (LS_COLORS drives the palette)
+  alias ls='ls --color=auto'
+  alias ll='ls -lah --color=auto'
+fi
+# Seed LS_COLORS when unset (e.g. minimal VMs with no /etc/DIR_COLORS)
+if [ -z "$LS_COLORS" ] && command -v dircolors >/dev/null 2>&1; then
+  eval "$(dircolors -b 2>/dev/null)"
 fi
 
 command -v bat >/dev/null && alias cat='bat --paging=never'
