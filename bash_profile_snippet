@@ -1,0 +1,7 @@
+# dotfiles-auto-exec-zsh
+# Auto-exec into zsh for interactive login shells.
+# Workaround for LDAP-backed users who cannot use chsh to change their login shell.
+if [[ $- == *i* ]] && [ -z "$ZSH_EXECED" ] && command -v zsh >/dev/null 2>&1; then
+  export ZSH_EXECED=1
+  exec zsh -l
+fi

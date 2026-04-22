@@ -11,6 +11,7 @@ NVIM_CONFIG="$DOTFILES_DIR/nvim_init.lua"
 TMUX_CONFIG="$DOTFILES_DIR/tmux.conf"
 ZSHRC="$DOTFILES_DIR/zshrc"
 STARSHIP_CONFIG="$DOTFILES_DIR/starship.toml"
+BASH_PROFILE_SNIPPET="$DOTFILES_DIR/bash_profile_snippet"
 CLAUDE_STATUSLINE="$DOTFILES_DIR/statusline-command.sh"
 CLAUDE_SETTINGS="$DOTFILES_DIR/claude-settings.json"
 
@@ -182,14 +183,29 @@ for host in "$@"; do
     fi
 
     # Note: we do not run chsh — LDAP-backed users cannot change their login
-    # shell locally, and chsh often hangs waiting for a password. tmux.conf
-    # sets default-shell to zsh so `vm <host>` lands you in zsh regardless.
+    # shell locally, and chsh often hangs waiting for a password. Instead we
+    # patch ~/.bash_profile below to exec zsh on interactive login, and
+    # tmux.conf sets default-shell to zsh so nested sessions also land in zsh.
   '
 
   # Deploy zshrc
   if [ -f "$ZSHRC" ]; then
     cat "$ZSHRC" | ssh "$host" "cat > ~/.zshrc"
     echo "  zshrc deployed"
+  fi
+
+  # Patch ~/.bash_profile to auto-exec into zsh on interactive login
+  # (idempotent — guarded by the "dotfiles-auto-exec-zsh" marker).
+  if [ -f "$BASH_PROFILE_SNIPPET" ]; then
+    cat "$BASH_PROFILE_SNIPPET" | ssh "$host" '
+      snippet=$(cat)
+      if [ ! -f ~/.bash_profile ] || ! grep -q "dotfiles-auto-exec-zsh" ~/.bash_profile; then
+        printf "\n%s\n" "$snippet" >> ~/.bash_profile
+        echo "  bash_profile patched to auto-exec zsh"
+      else
+        echo "  bash_profile already configured to auto-exec zsh"
+      fi
+    '
   fi
 
   # Deploy starship config
