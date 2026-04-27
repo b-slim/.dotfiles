@@ -54,6 +54,7 @@ brew "kubectx"          # kubectx + kubens: switch contexts and namespaces fast
 # ── Java ──────────────────────────────────────────────────────────────────────
 brew "jenv"             # Java version manager (per-directory via .java-version)
 brew "maven"            # build tool
+brew "async-profiler"   # bundles jfrconv (JFR → flamegraph/collapsed-stacks) and asprof
 
 cask "temurin@21"       # Eclipse Temurin JDK 21 (current LTS)
 cask "temurin@17"       # Eclipse Temurin JDK 17 (previous LTS)

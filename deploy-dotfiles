@@ -178,6 +178,38 @@ for host in "$@"; do
       v=$(gh_latest_tag junegunn/fzf)
       try_install fzf \
         "https://github.com/junegunn/fzf/releases/download/${v}/fzf-${v#v}-linux_amd64.tar.gz"
+
+      # async-profiler — bundles jfrconv. The jfrconv launcher is a shell
+      # script that needs its sibling jar, so extract the full archive into
+      # ~/.local/async-profiler and symlink jfrconv + asprof into ~/.local/bin.
+      if command -v jfrconv >/dev/null 2>&1; then
+        echo "  jfrconv already installed"
+      else
+        v=$(gh_latest_tag async-profiler/async-profiler)
+        if [ -n "$v" ]; then
+          ver=${v#v}
+          url="https://github.com/async-profiler/async-profiler/releases/download/${v}/async-profiler-${ver}-linux-x64.tar.gz"
+          tmp=$(mktemp -d)
+          if curl -sSLf "$url" -o "$tmp/ap.tgz" 2>/dev/null \
+             && tar -C "$tmp" -xzf "$tmp/ap.tgz" 2>/dev/null; then
+            ap_dir=$(find "$tmp" -maxdepth 1 -type d -name "async-profiler-*" | head -1)
+            if [ -n "$ap_dir" ]; then
+              rm -rf "$HOME/.local/async-profiler"
+              mv "$ap_dir" "$HOME/.local/async-profiler"
+              ln -sf "$HOME/.local/async-profiler/bin/jfrconv" "$HOME/.local/bin/jfrconv"
+              ln -sf "$HOME/.local/async-profiler/bin/asprof" "$HOME/.local/bin/asprof"
+              echo "  jfrconv installed (async-profiler ${ver})"
+            else
+              echo "  Warning: jfrconv install failed (no extract dir)"
+            fi
+          else
+            echo "  Warning: jfrconv install failed (download/extract)"
+          fi
+          rm -rf "$tmp"
+        else
+          echo "  Warning: jfrconv install failed (could not fetch latest tag)"
+        fi
+      fi
     else
       echo "  Note: skipping binary installers (not Linux x86_64)"
     fi
