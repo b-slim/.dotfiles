@@ -272,7 +272,17 @@ vm() {
   if [ "$use_mosh" = true ]; then
     mosh "$host" -- tmux new-session -A -s "$session"
   else
-    ssh "$host" -t "tmux new-session -A -s '$session'"
+    # Pin SSH_AUTH_SOCK to a stable symlink before tmux starts. Existing
+    # panes' frozen env keeps pointing at ~/.ssh/ssh_auth_sock, and each
+    # reconnect retargets the symlink to the new forwarded socket — so
+    # ssh-add keeps working without respawning panes.
+    ssh "$host" -t '
+      if [ -n "$SSH_AUTH_SOCK" ] && [ -S "$SSH_AUTH_SOCK" ] && [ "$SSH_AUTH_SOCK" != "$HOME/.ssh/ssh_auth_sock" ]; then
+        ln -sf "$SSH_AUTH_SOCK" "$HOME/.ssh/ssh_auth_sock"
+      fi
+      [ -L "$HOME/.ssh/ssh_auth_sock" ] && export SSH_AUTH_SOCK="$HOME/.ssh/ssh_auth_sock"
+      tmux new-session -A -s '"'$session'"'
+    '
   fi
 }
 
