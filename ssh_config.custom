@@ -4,7 +4,9 @@
 # ── Multiplexing — reuse existing connections (subsequent SSH is instant) ─────
 Host *
     ControlMaster auto
-    ControlPath ~/.ssh/cm_%r@%h:%p
+    # %C (hash of %l%h%p%r) keeps the socket path under macOS's 104-char
+    # sockaddr_un limit; long bastion FQDNs overflow %r@%h:%p.
+    ControlPath ~/.ssh/cm_%C
     ControlPersist 10m
     ServerAliveInterval 60
     ServerAliveCountMax 3
