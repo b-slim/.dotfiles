@@ -51,6 +51,9 @@ brew "kubectl"          # K8s CLI
 brew "k9s"              # TUI for Kubernetes
 brew "kubectx"          # kubectx + kubens: switch contexts and namespaces fast
 
+# ── Cloud ─────────────────────────────────────────────────────────────────────
+brew "azure-cli"        # Azure CLI (az)
+
 # ── Java ──────────────────────────────────────────────────────────────────────
 brew "jenv"             # Java version manager (per-directory via .java-version)
 brew "maven"            # build tool
