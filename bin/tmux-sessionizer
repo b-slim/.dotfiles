@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# tmux-sessionizer — fuzzy-pick a project/worktree → tmux session
+#
+# Picks from: every git worktree of every git repo under ~/work and ~/perso.
+# Bound to Prefix+f (inside tmux) and Ctrl-f (outside tmux); see tmux.conf / zshrc.
+set -euo pipefail
+
+ROOTS=("$HOME/work" "$HOME/perso")
+
+if [[ $# -eq 1 ]]; then
+    selected=$1
+else
+    selected=$(
+        for root in "${ROOTS[@]}"; do
+            [ -d "$root" ] || continue
+            for d in "$root"/*/; do
+                d="${d%/}"
+                # Main worktrees only (.git is a directory). Linked worktrees
+                # have .git as a file and are enumerated by their main repo below.
+                [ -d "$d/.git" ] || continue
+                git -C "$d" worktree list --porcelain 2>/dev/null \
+                    | awk '/^worktree /{print $2}'
+            done
+        done | sort -u | fzf
+    )
+fi
+
+[[ -z "$selected" ]] && exit 0
+
+# tmux session names can't contain . : or whitespace
+selected_name=$(basename "$selected" | tr '.: ' '___')
+
+tmux_running=$(pgrep tmux || true)
+
+# Not in tmux and no tmux server running: start a fresh attached session
+if [[ -z "${TMUX:-}" && -z "$tmux_running" ]]; then
+    tmux new-session -s "$selected_name" -c "$selected"
+    exit 0
+fi
+
+# Create the session detached if it doesn't exist yet
+if ! tmux has-session -t="$selected_name" 2>/dev/null; then
+    tmux new-session -ds "$selected_name" -c "$selected"
+fi
+
+# Switch (inside tmux) or attach (outside tmux)
+if [[ -z "${TMUX:-}" ]]; then
+    tmux attach -t "$selected_name"
+else
+    tmux switch-client -t "$selected_name"
+fi

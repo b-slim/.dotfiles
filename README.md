@@ -20,6 +20,7 @@ Personal configs for Neovim, tmux, zsh, git, Ghostty, and Claude Code — with d
 | `claude-settings.json` | `~/.claude/settings.json` | Claude Code: statusline config + allow/deny permissions |
 | `Brewfile` | — | All Homebrew packages, installed via `brew bundle` |
 | `macos-defaults.sh` | — | macOS system settings: keyboard, trackpad, Finder, Dock, screenshots |
+| `bin/tmux-sessionizer` | `~/.local/bin/tmux-sessionizer` | Fuzzy-pick a repo/worktree under `~/work` or `~/perso` → tmux session |
 | `deploy-dotfiles-local` | `~/bin/deploy-dotfiles-local` | Deploy all configs to local macOS |
 | `deploy-dotfiles` | `~/bin/deploy-dotfiles` | Deploy configs to remote Linux VMs via SSH |
 
@@ -82,8 +83,9 @@ git clone git@github.com:b-slim/.dotfiles.git ~/.dotfiles
 12. `tmux.conf` → `~/.tmux.conf` + reload if tmux is running
 13. `statusline-command.sh` → `~/.claude/statusline-command.sh` (chmod +x)
 14. `claude-settings.json` → merged into `~/.claude/settings.json` via jq
-15. Headless Neovim — `nvim --headless "+Lazy! sync" +qa`
-16. `~/bin/` — symlinks for both deploy scripts
+15. `bin/*` → `~/.local/bin/` (e.g. `tmux-sessionizer`)
+16. Headless Neovim — `nvim --headless "+Lazy! sync" +qa`
+17. `~/bin/` — symlinks for both deploy scripts
 
 Existing regular files are backed up as `.bak` before being replaced.
 
@@ -141,6 +143,9 @@ deploy-dotfiles-local --macos-defaults      # optional: apply system settings
 | `fv` | fzf → pick file → open in nvim (with bat preview) |
 | `fcd` | fzf → pick directory → cd into it (with eza tree preview) |
 | `fgl` | fzf → browse git log → show diff for selected commit |
+| `wt` | fzf → pick a worktree of the current repo → cd into it |
+| `wtnew <branch> [path]` | Create worktree for branch (existing or new) as sibling of repo → cd into it |
+| `wtrm` | fzf → pick a worktree → remove (refuses main, prompts to confirm) |
 | `mkcd <dir>` | `mkdir -p` + `cd` in one step |
 | `extract <file>` | Extract any archive (tar.gz, zip, bz2, 7z, …) |
 | `serve [port]` | Start a Python HTTP server in the current dir (default: 8000) |
@@ -521,7 +526,21 @@ Leader key is `Space`.
 | Scrollback | 50,000 lines |
 | Pane navigation | `Prefix + h/j/k/l` (vim-style) |
 | Alt navigation | `Alt+h/j/k/l` (no prefix needed) |
+| Sessionizer | `Prefix + f` — fuzzy-pick repo/worktree → switch session |
 | Color | 24-bit (true color) |
+
+### Sessionizer (per-project tmux sessions)
+
+`bin/tmux-sessionizer` turns "switch to project X" into one keystroke. Each repo / worktree under `~/work` or `~/perso` becomes its own persistent tmux session — keeping shell history, running dev servers, and editor state isolated per project.
+
+| Key | Where | Action |
+|-----|-------|--------|
+| `Prefix+f` | Inside tmux | Open picker → `switch-client` to the chosen session (creates it if needed) |
+| `Ctrl+f` | Plain shell | Open picker → `attach` to the chosen session (creates it if needed) |
+
+Picker scope: every `git worktree list` of every git repo found as a direct child of `~/work` or `~/perso`. Non-repo dirs (heap dumps, archives, etc.) are filtered out. Roots are configured at the top of `bin/tmux-sessionizer`.
+
+`Ctrl+f` shadows zsh's default `forward-char` — right-arrow does the same thing.
 
 ---
 

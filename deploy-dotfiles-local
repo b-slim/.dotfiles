@@ -27,6 +27,7 @@ CLAUDE_STATUSLINE="$DOTFILES_DIR/statusline-command.sh"
 CLAUDE_SETTINGS="$DOTFILES_DIR/claude-settings.json"
 BREWFILE="$DOTFILES_DIR/Brewfile"
 MACOS_DEFAULTS="$DOTFILES_DIR/macos-defaults.sh"
+BIN_DIR="$DOTFILES_DIR/bin"
 
 USE_SYMLINKS=true
 DRY_RUN=false
@@ -329,6 +330,21 @@ else
     "$HOME/.tmux/plugins/tpm/bin/install_plugins" 2>/dev/null && success "Tmux plugins installed" \
       || warn "Plugin install failed — open tmux and press Prefix+I to install manually"
   fi
+fi
+
+# ── Scripts in bin/ → ~/.local/bin ────────────────────────────────────────────
+
+echo ""
+echo "Deploying scripts from bin/..."
+if [ ! -d "$BIN_DIR" ]; then
+  warn "bin/ not found in $DOTFILES_DIR, skipping"
+else
+  run mkdir -p "$HOME/.local/bin"
+  for script in "$BIN_DIR"/*; do
+    [ -f "$script" ] || continue
+    [ -x "$script" ] || run chmod +x "$script"
+    deploy_file "$script" "$HOME/.local/bin/$(basename "$script")"
+  done
 fi
 
 # ── Claude Code statusline ────────────────────────────────────────────────────

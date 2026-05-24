@@ -89,6 +89,13 @@ export FZF_DEFAULT_OPTS='
   --preview-window=right:50%:wrap
 '
 
+# Ctrl-f → fuzzy-pick a repo/worktree → attach (or create) a tmux session for it.
+# Shadows zsh's default forward-char (which right-arrow also does).
+# Inside tmux, Prefix+f opens the same picker (see tmux.conf).
+if command -v tmux-sessionizer >/dev/null 2>&1; then
+  bindkey -s '^f' 'tmux-sessionizer\n'
+fi
+
 # zoxide — smarter cd (replaces cd with z)
 if command -v zoxide >/dev/null 2>&1; then
   eval "$(zoxide init zsh)"
@@ -240,6 +247,56 @@ fgl() {
   git log --oneline --color=always | fzf --ansi --preview 'git show --color=always {1}' | awk '{print $1}' | xargs -I{} git show {}
 }
 
+# fzf + cd into a git worktree of the current repo
+wt() {
+  local dir
+  dir=$(git worktree list | fzf --preview 'cd {1} && git log --oneline --color=always -20' --preview-window=right:60%) || return
+  dir=$(echo "$dir" | awk '{print $1}')
+  [ -n "$dir" ] && cd "$dir"
+}
+
+# Create a worktree for <branch> (existing or new) as a sibling of the repo and cd into it
+# Usage: wtnew <branch>          → ../<repo>-<branch-sanitized>
+#        wtnew <branch> <path>   → explicit path
+wtnew() {
+  local branch="$1"
+  if [ -z "$branch" ]; then
+    echo "usage: wtnew <branch> [path]" >&2
+    return 1
+  fi
+  local root
+  root=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "not in a git repo" >&2; return 1; }
+  local repo safe path
+  repo=$(basename "$root")
+  safe="${branch//\//-}"
+  path="${2:-$(dirname "$root")/$repo-$safe}"
+  if git show-ref --verify --quiet "refs/heads/$branch"; then
+    git worktree add "$path" "$branch" || return
+  else
+    git worktree add -b "$branch" "$path" || return
+  fi
+  cd "$path"
+}
+
+# fzf + remove a worktree (with confirmation; refuses the current/main worktree)
+wtrm() {
+  local line dir main
+  line=$(git worktree list | fzf) || return
+  dir=$(echo "$line" | awk '{print $1}')
+  [ -z "$dir" ] && return
+  main=$(git worktree list | awk 'NR==1{print $1}')
+  if [ "$dir" = "$main" ]; then
+    echo "refusing to remove the main worktree: $dir" >&2
+    return 1
+  fi
+  if [ "$dir" = "$(git rev-parse --show-toplevel 2>/dev/null)" ]; then
+    cd "$main" || return
+  fi
+  read -q "?Remove worktree $dir? [y/N] " || { echo; return 1; }
+  echo
+  git worktree remove "$dir"
+}
+
 # Extract any archive
 extract() {
   case "$1" in
@@ -351,6 +408,9 @@ cheat() {
   printf "  ${y}git new <name>${r}       ${d}checkout -b${r}\n"
   printf "  ${y}lg${r}                   ${d}lazygit TUI${r}\n"
   printf "  ${y}fgl${r}                  ${d}fzf git log browser${r}\n"
+  printf "  ${y}wt${r}                   ${d}fzf: pick a worktree → cd${r}\n"
+  printf "  ${y}wtnew <branch>${r}       ${d}create worktree for branch + cd${r}\n"
+  printf "  ${y}wtrm${r}                 ${d}fzf: pick a worktree → remove${r}\n"
   echo ""
   printf "${b}${c}── Zsh ────────────────────────────────────────────────────${r}\n"
   printf "  ${y}→  (right arrow)${r}     ${d}accept autosuggestion${r}\n"
@@ -374,6 +434,8 @@ cheat() {
   printf "${b}${c}── SSH / VM ─────────────────────────────────────────────────${r}\n"
   printf "  ${y}vm <host> [session]${r}  ${d}ssh + tmux attach/create in one command${r}\n"
   printf "  ${y}mosh <host>${r}          ${d}better SSH: survives sleep/wake/roaming${r}\n"
+  printf "  ${y}Ctrl+f${r}               ${d}fuzzy-pick repo/worktree → tmux session${r}\n"
+  printf "  ${y}Prefix+f${r}             ${d}same picker, from inside tmux${r}\n"
   printf "  ${y}Prefix+s${r}             ${d}tmux: list and switch sessions${r}\n"
   printf "  ${y}Prefix+d${r}             ${d}tmux: detach (session keeps running)${r}\n"
   printf "  ${y}Prefix+r${r}             ${d}tmux: reload config${r}\n"
@@ -430,3 +492,5 @@ unset _zsh
 # ── Local overrides ───────────────────────────────────────────────────────────
 # Put machine-specific config (work proxies, private env vars, etc.) in ~/.zshrc.local
 [ -f "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"
+export VOLTA_HOME="$HOME/.volta"
+export PATH="$VOLTA_HOME/bin:$PATH"
