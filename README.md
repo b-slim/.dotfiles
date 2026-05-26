@@ -542,6 +542,94 @@ Picker scope: every `git worktree list` of every git repo found as a direct chil
 
 `Ctrl+f` shadows zsh's default `forward-char` — right-arrow does the same thing.
 
+Session names come from `basename` of the worktree path, with `.`, `:`, and spaces replaced by `_` (tmux name restrictions). So `~/work/trino-fix-LTS-bug/` becomes the session `trino-fix-LTS-bug`.
+
+---
+
+## Worktree + Sessionizer workflow
+
+The `wt*` functions and `tmux-sessionizer` are designed to work as one system: **one git worktree = one directory = one tmux session.** No context-switching cost, no stash dance, no re-running dev servers.
+
+### The functions, at a glance
+
+| Command | What it does |
+|---------|--------------|
+| `wtnew <branch>` | Create a worktree as a sibling of the current repo (`../<repo>-<branch>`) and `cd` into it. Creates the branch if it doesn't exist. |
+| `wtnew <branch> <path>` | Same, but at an explicit path. |
+| `wt` | fzf-pick any worktree of the current repo → `cd` into it. |
+| `wtrm` | fzf-pick a worktree → confirm → `git worktree remove` it (refuses the main worktree). |
+| `Ctrl+f` / `Prefix+f` | Picker across **all** repos+worktrees under `~/work` and `~/perso` → tmux session. |
+
+### Example 1 — Start a new feature branch alongside the main checkout
+
+You're in `~/work/trino` on `main` with uncommitted exploratory work you don't want to disturb. You need to start a clean branch for `fix-LTS-cache-miss`:
+
+```bash
+cd ~/work/trino
+wtnew fix-LTS-cache-miss
+# → creates branch + worktree at ~/work/trino-fix-LTS-cache-miss
+# → cd's you there
+
+# Hit Prefix+f (or Ctrl+f from a plain shell), pick the new worktree
+# → you're now in a dedicated tmux session named `trino-fix-LTS-cache-miss`
+```
+
+The main `~/work/trino` worktree is untouched — its dev server keeps running in its own session. Switch between them with `Prefix+f` any time.
+
+### Example 2 — Review a teammate's PR without trashing your in-flight work
+
+A PR review request lands while you're mid-feature. Don't stash; don't switch branches in place — make a throwaway worktree:
+
+```bash
+cd ~/work/trino
+git fetch origin pull/8421/head:pr-8421     # fetch the PR ref as a local branch
+wtnew pr-8421                                # worktree + cd
+# Prefix+f → pick the new session, build/test there
+# When done:
+wtrm                                         # fzf-pick pr-8421 → confirm → gone
+git branch -D pr-8421                        # drop the branch too
+```
+
+Your original feature session is exactly where you left it — same editor state, same dev server, same shell history.
+
+### Example 3 — Jump between projects without losing state
+
+You're deep in a Trino debugging session. Slack pings about a `claude-assistant` doc fix:
+
+```
+Prefix+f → type "assist" → Enter
+```
+
+Lands you in the `claude-assistant` session (creates it on first jump). Fix, commit, push. `Prefix+f` → "trino" → Enter, and you're back exactly where you were.
+
+This is the main reason the sessionizer exists: **context-switch cost = one fuzzy match.**
+
+### Example 4 — Clean up after a feature ships
+
+```bash
+cd ~/work/trino                              # back in the main worktree
+git worktree list                            # see what's still around
+wtrm                                         # fzf-pick the merged worktree → remove
+```
+
+`wtrm` refuses to remove the main worktree, and if you happen to be standing in the worktree you're removing, it `cd`s you back to main first. Branches stick around after `wtrm` — delete them separately with `git branch -d <name>` if you're done with them.
+
+### When to use `wt` vs `Ctrl+f` / `Prefix+f`
+
+| Want to… | Use |
+|----------|-----|
+| Switch to another worktree of the **current** repo, in the **current** shell | `wt` (just `cd`s — no tmux) |
+| Jump to **any** project (different repo, different worktree) with a dedicated tmux session | `Ctrl+f` (plain shell) or `Prefix+f` (in tmux) |
+| Create a new worktree from scratch | `wtnew <branch>` |
+| Tear one down | `wtrm` |
+
+### Tips
+
+- **Naming**: `wtnew feature/foo-bar` sanitizes the slash → directory is `../<repo>-feature-foo-bar`. The branch keeps its slash.
+- **First-time setup on a new VM**: ensure `~/work` (and/or `~/perso`) exists before the picker has anything to show. The sessionizer silently produces nothing if both roots are missing.
+- **Adding more roots**: edit `ROOTS=(...)` at the top of `bin/tmux-sessionizer` and redeploy.
+- **Existing branch**: `wtnew <existing-branch>` checks out the existing branch instead of creating a new one — useful for resuming abandoned work.
+
 ---
 
 ## Claude Code Statusline
