@@ -343,6 +343,21 @@ vm() {
   fi
 }
 
+# fzf-pick a concrete host from ~/.ssh/config → vm <host> [args...]
+# Skips wildcard entries (Host *, *.foo, ?, !) — only real, dialable names.
+# Extra args pass through to vm, so `vmf work` → vm <picked-host> work.
+vmf() {
+  local host
+  host=$(awk '
+    tolower($1) == "host" {
+      for (i = 2; i <= NF; i++) {
+        if ($i !~ /[*?!]/) print $i
+      }
+    }
+  ' "$HOME/.ssh/config" 2>/dev/null | sort -u | fzf --prompt='vm > ' --height=40% --reverse) || return
+  [ -n "$host" ] && vm "$host" "$@"
+}
+
 # Wrap `claude` to default the session name to the current working directory
 # (respects an explicit -n/--name if the user provided one).
 claude() {
@@ -433,6 +448,7 @@ cheat() {
   echo ""
   printf "${b}${c}── SSH / VM ─────────────────────────────────────────────────${r}\n"
   printf "  ${y}vm <host> [session]${r}  ${d}ssh + tmux attach/create in one command${r}\n"
+  printf "  ${y}vmf [session]${r}        ${d}fzf-pick host from ~/.ssh/config → vm${r}\n"
   printf "  ${y}mosh <host>${r}          ${d}better SSH: survives sleep/wake/roaming${r}\n"
   printf "  ${y}Ctrl+f${r}               ${d}fuzzy-pick repo/worktree → tmux session${r}\n"
   printf "  ${y}Prefix+f${r}             ${d}same picker, from inside tmux${r}\n"
