@@ -225,6 +225,9 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 fi
 alias path='echo $PATH | tr ":" "\n"'
 
+# ── Aliases: LinkedIn ─────────────────────────────────────────────────────────
+alias copilot-linkedin='GH_TOKEN=$(gh auth token -u sbouguer_LinkedIn) copilot'
+
 # ── Functions ─────────────────────────────────────────────────────────────────
 
 # Create directory and cd into it
