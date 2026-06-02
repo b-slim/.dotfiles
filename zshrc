@@ -252,9 +252,12 @@ fgl() {
 
 # fzf + cd into a git worktree of the current repo
 wt() {
-  local dir
-  dir=$(git worktree list | fzf --preview 'cd {1} && git log --oneline --color=always -20' --preview-window=right:60%) || return
-  dir=$(echo "$dir" | awk '{print $1}')
+  local sel dir
+  # Prepend the worktree name (basename of the path) as the display column so
+  # the picker shows "calibration-prefetch" instead of the full sibling path.
+  sel=$(git worktree list | awk '{n=split($1,a,"/"); printf "%-30s %s\n", a[n], $0}' \
+        | fzf --preview 'cd {2} && git log --oneline --color=always -20' --preview-window=right:60%) || return
+  dir=$(echo "$sel" | awk '{print $2}')
   [ -n "$dir" ] && cd "$dir"
 }
 
