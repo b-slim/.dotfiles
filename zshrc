@@ -516,3 +516,11 @@ unset _zsh
 [ -f "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"
 export VOLTA_HOME="$HOME/.volta"
 export PATH="$VOLTA_HOME/bin:$PATH"
+
+# review-prep plugin (LinkedIn perf-review evidence gatherer) -- loaded via --plugin-dir
+# (repo can't be marketplace-added per LinkedIn policy; git pull to update)
+alias claude-review='claude --plugin-dir ~/work/mhelmick-tde-skillz'
+
+# Android SDK (Capacitor / Sendline mobile builds)
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
