@@ -68,3 +68,4 @@ cask "font-jetbrains-mono-nerd-font"
 
 # ── Apps ──────────────────────────────────────────────────────────────────────
 cask "ghostty"
+cask "android-studio"   # Android IDE
